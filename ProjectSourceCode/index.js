@@ -95,7 +95,7 @@ app.post('/login', async (req, res) => {
 
   const username = req.body.username;
   var query = `SELECT username, password FROM users WHERE username = '${username}';`;
-  var redirectPath = '/discover';
+  var redirectPath = '/calendar';
   var currentUser = null;
   try 
   {
@@ -182,9 +182,33 @@ app.get('/logout', (req, res) =>
     res.render('pages/logout',{message: "Logged out successfully!"});
   });
 
-app.get('/calendar', (req, res) => 
+app.get('/calendar', async (req, res) => 
   {
-    res.render('pages/discover',{});
+    /*
+        Only functional once event table is created, and add events functionality is added.
+    */
+
+    const username = req.session.currentUser;
+
+    var query = `SELECT eventName, eventDate, eventTime FROM events WHERE user = '${username}';`;
+    let results = [];
+    try 
+    {
+      results = await db.any(query);
+      console.log("Successfully retrieved " +  results.length + " events");
+    } 
+    catch (err) 
+    {
+      console.log("Error occured in finding .");
+    }
+    res.render('pages/calendar',{events: results});
+  });
+
+  app.post('/calendar', async (req, res) => 
+  {
+    /*
+        Add functionality to insert a new calendar event into events table here.
+    */
   });
 
 // *****************************************************
