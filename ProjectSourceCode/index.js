@@ -133,27 +133,24 @@ app.post('/login', async (req, res) => {
 app.post('/register', async (req, res) => {
   //hash the password using bcrypt library
   const hash = await bcrypt.hash(req.body.password, 10);
+  const username = req.body.username;
 
-  // To-DO: Insert username and hashed password into the 'users' table
-  var query = `INSERT INTO users (username, password) VALUES ('${req.body.username}','${hash}');`;
+  const user = await db.oneOrNone('SELECT username, password FROM users WHERE username=$1',[username]);
+
+  if(user){
+      return res.render('pages/register', {error:true, message:"Username taken"});
+  }
+  
   var redirectPath = '/login';
-  try 
-  {
-    let results = await db.any(query);
-    /*res.status(200).json(
-      {
-      data: results,
-      });*/
-  } 
-  catch (err) 
-  {
-    /*res.status(400).json({
-      error: err,
-    });*/
-    redirectPath = '/register'
-  };
-
-  res.redirect(redirectPath);
+  await db.none(
+    'INSERT INTO users (username, password) VALUES ($1,$2)', [username, hash]
+).then(()=> {
+    res.redirect('pages/login');
+  })
+  .catch(error=>{
+    console.error(error);
+    res.redirect('pages/register', {error:true, message:"Error when logging in"});
+  });
 });
 
 
