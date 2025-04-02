@@ -75,10 +75,9 @@ app.use(
 // *****************************************************
 
 // TODO - Include your API routes here
-app.get('/', (req, res) => 
-  {
-    res.redirect('pages/login',{});
-  });
+app.get('/', (req, res) => {
+  res.redirect('/welcome'); // Redirect to the `/welcome` route
+});
 
 app.get('/register', (req, res) => 
   {
@@ -166,7 +165,8 @@ const auth = (req, res, next) => {
   next();
 };
 
-app.use(auth);
+app.use('/calendar', auth);
+app.use('/logout', auth);
 
 app.get('/logout', (req, res) => 
   {
