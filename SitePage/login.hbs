@@ -1,0 +1,51 @@
+<h1>Login</h1>
+<form id="loginForm">
+  <div>
+    <label for="username">Username:</label>
+    <input type="text" id="username" name="username" />
+  </div>
+  <div>
+    <label for="password">Password:</label>
+    <input type="password" id="password" name="password" />
+  </div>
+
+  <!-- The tricky button! -->
+  <button id="loginButton" type="submit">Login</button>
+</form>
+
+<script>
+  const loginButton = document.getElementById('loginButton');
+  const usernameInput = document.getElementById('username');
+  const passwordInput = document.getElementById('password');
+
+  // Helper function to check if both username and password are filled out
+  function isFormValid() {
+    return usernameInput.value.trim() !== '' && passwordInput.value.trim() !== '';
+  }
+
+  // If the user hovers over the button and the form is not valid,
+  // move the button to a random position on the screen.
+  loginButton.addEventListener('mouseover', (event) => {
+    if (!isFormValid()) {
+      const maxX = window.innerWidth - loginButton.offsetWidth;
+      const maxY = window.innerHeight - loginButton.offsetHeight;
+
+      // Generate random positions
+      const randomX = Math.floor(Math.random() * maxX);
+      const randomY = Math.floor(Math.random() * maxY);
+
+      // Position the button absolutely
+      loginButton.style.position = 'absolute';
+      loginButton.style.left = `${randomX}px`;
+      loginButton.style.top = `${randomY}px`;
+    }
+  });
+
+  // Prevent form submission if the fields are not filled
+  loginButton.addEventListener('click', (event) => {
+    if (!isFormValid()) {
+      event.preventDefault();
+      alert('Please enter both username and password before logging in!');
+    }
+  });
+</script>
