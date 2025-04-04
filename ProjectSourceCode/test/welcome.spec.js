@@ -1,13 +1,12 @@
-// test/welcome.spec.js
-// This test covers your existing GET /welcome route
+
+// This test covers the existing GET /welcome route
 
 const chai = require('chai');
 const chaiHttp = require('chai-http');
 chai.use(chaiHttp);
 const expect = chai.expect;
 
-// Import your Express app from index.js
-// (Make sure index.js exports just the 'app' if you want to test it properly.)
+
 const app = require('../index.js');
 
 describe('GET /welcome', () => {
