@@ -26,12 +26,16 @@ const hbs = handlebars.create({
 
 // database configuration
 const dbConfig = {
-  host: 'db', // the database server
-  port: 5432, // the database port
-  database: process.env.POSTGRES_DB, // the database name
-  user: process.env.POSTGRES_USER, // the user account to connect with
-  password: process.env.POSTGRES_PASSWORD, // the password of the user account
+  host: 'db',
+  port: 5432,
+  database: process.env.POSTGRES_DB,
+  user: process.env.POSTGRES_USER,
+  password: process.env.POSTGRES_PASSWORD,
 };
+
+if (process.env.NODE_ENV === 'test') {
+  dbConfig.host = 'localhost';
+}
 
 const db = pgp(dbConfig);
 
@@ -56,13 +60,15 @@ app.set('views', path.join(__dirname, 'views'));
 app.use(bodyParser.json()); // specify the usage of JSON for parsing request body.
 
 // initialize session variables
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET,
-    saveUninitialized: false,
-    resave: false,
-  })
-);
+const sessionSecret = process.env.SESSION_SECRET || 'testsecret';
+   app.use(session({
+     secret: sessionSecret,
+     saveUninitialized: false,
+     resave: false,
+   }));
+
+
+
 
 app.use(
   bodyParser.urlencoded({
@@ -75,8 +81,8 @@ app.use(
 // *****************************************************
 
 // TODO - Include your API routes here
-app.get('/', (req, res) => {
-  res.redirect('/welcome'); // Redirect to the `/welcome` route
+app.get('/welcome', (req, res) => {
+  res.json({status: 'success', message: 'Welcome!'});
 });
 
 app.get('/register', (req, res) => 
@@ -215,5 +221,5 @@ app.get('/calendar', async (req, res) =>
 // <!-- Section 5 : Start Server-->
 // *****************************************************
 // starting the server and keeping the connection open to listen for more requests
-app.listen(3000);
+module.exports = app.listen(3000);
 console.log('Server is listening on port 3000');
