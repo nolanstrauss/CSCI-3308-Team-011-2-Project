@@ -1,3 +1,4 @@
+<!-- navbar partial -->
 <header>
  <nav class="navbar navbar-expand-sm border-bottom">
    <div class="container">
@@ -14,16 +15,20 @@
      <div class="collapse navbar-collapse" id="navbar-collapse">
        <ul class="navbar-nav me-auto">
          <li class="nav-item">
-           <!-- TODO: For Discover, add a <a> tag with an attribute href to call the '/discover' API -->
            <a class="nav-link" href="{{#if user}}/calendar{{else}}/{{/if}}">View Calendar</a>
          </li>
        </ul>
        <div class="nav-item me-1">
-         <!-- TODO: For Logout, add a <a> tag with an attribute href to call the '/logout API -->
         {{#if user}}
             <a class="nav-link" href="/logout">Logout</a>
         {{else}}
-            <a class="nav-link" href="/login">Login</a>
+            {{#if routeIsLogin}}
+              <a class="nav-link" href="/register">Register</a>
+            {{else if routeIsRegister}}
+              <a class="nav-link" href="/login">Login</a>
+            {{else}}
+              <a class="nav-link" href="/login">Login</a>
+            {{/if}}
         {{/if}}
        </div>
      </div>

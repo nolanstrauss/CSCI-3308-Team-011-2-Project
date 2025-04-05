@@ -7,8 +7,8 @@ CREATE TABLE users
 CREATE TABLE events
 (
     eventID VARCHAR(50) PRIMARY KEY,
-    eventName VarChar(120),
-    eventTime time(0),
+    eventName VARCHAR(120),
+    eventTime TIME(0),
     eventDate DATE,
-    user VARCHAR(50)
+    "user" VARCHAR(50)  -- FIXED: properly quoted
 );
