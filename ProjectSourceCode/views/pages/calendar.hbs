@@ -60,7 +60,7 @@
           <div class="modal-dialog">
             <div class="modal-content">
               <div class="modal-header">
-                <h5 class="modal-title">Modal title</h5>
+                <h5 class="modal-title">Create a new Event!</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
               <div class="modal-body">
@@ -70,59 +70,20 @@
                     <input type="text" id="event_name"/>
 
                     <p>Category</p>
-                    <select
-                      class="form-control"
-                      id="event_category"
-                      required
-                    >
-                      <option value="classes" default>Classes</option>
-                      <option value="home">Home</option>
-                      <option value="free-time">Free Time</option>
-                      <option value="misc">Misc.</option>
-                    </select>
+                    <input type="text" id="event_category"/>
 
-                    <p>Weekday</p>
-                    <select
-                      class="form-control"
-                      id="event_weekday"
-                      required
-                    >
-                      <option value="monday" default>Monday</option>
-                      <option value="tuesday">Tuesday</option>
-                      <option value="wednesday">Wednesday</option>
-                      <option value="thursday">Thursday</option>
-                      <option value="friday">Friday</option>
-                    </select>
-
+                    <p>Date</p>
+                    <input type="date" id="birthday" name="birthday">
+                  
                     <p>Time</p>
                     <input type="time" id="event_time">
                     
-
-
-                    <p>Event Modality</p>
-                    <select
-                      class="form-control"
-                      id="event_modality"
-                      required
-                      onchange="updateLocationOptions(this.value)"
-                    >
-                      <option value="in-person" default>In Person</option>
-                      <option value="remote">Remote</option>
-                    </select>
-
-                    <p id="event_location_title">Location</p>
-                    <input type="text" id="event_location"/>
-                    <p id="event_remote_url_title" hidden="true">Remote URL</p>
-                    <input type="text" pattern="[a-zA-Z0-9]{1,256}\.\.[a-zA-Z0-9]{1,256}" required aria-required="true" hidden="true" onchange="checkValidURL()" aria-required="true" id="event_remote_url"/>
+                    <p>Description</p>
+                    <textarea rows="5" cols="60" id="event_description"></textarea>
                     
-                    <span class="text" hidden = true id="reminder">Enter a valid URL.</span>
-                  
-                  <p>Attendees</p>
-                  <input type="text" id="event_attendees"/>
+                    <p>Target Email</p>
+                    <input type="text" id="event_attendees"/>
 
-                    
-        
-              
                   <div class="modal-footer"> 
                   <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                   <button class="btn btn-primary" type="submit" onclick="saveEvent()">
