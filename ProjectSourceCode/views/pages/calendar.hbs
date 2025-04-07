@@ -43,8 +43,99 @@
       <table id="calendarTable">
         <!-- We’ll populate this table dynamically with JS. -->
       </table>
-    </div>
+      <div class="row">
+          <div class="col-2">
+              <div class="custom-container">
+                <button
+                  class="btn btn-primary mt-3"
+                  data-bs-toggle="modal"
+                  data-bs-target="#event_modal" 
+                >
+                  Create Event
+                </button>
+              </div>
+          </div>
+      </div>
+      <div class="modal" tabindex="-1" id="event_modal">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">Modal title</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                  <form id="modal_form">
 
+                    <p>Event Name</p>
+                    <input type="text" id="event_name"/>
+
+                    <p>Category</p>
+                    <select
+                      class="form-control"
+                      id="event_category"
+                      required
+                    >
+                      <option value="classes" default>Classes</option>
+                      <option value="home">Home</option>
+                      <option value="free-time">Free Time</option>
+                      <option value="misc">Misc.</option>
+                    </select>
+
+                    <p>Weekday</p>
+                    <select
+                      class="form-control"
+                      id="event_weekday"
+                      required
+                    >
+                      <option value="monday" default>Monday</option>
+                      <option value="tuesday">Tuesday</option>
+                      <option value="wednesday">Wednesday</option>
+                      <option value="thursday">Thursday</option>
+                      <option value="friday">Friday</option>
+                    </select>
+
+                    <p>Time</p>
+                    <input type="time" id="event_time">
+                    
+
+
+                    <p>Event Modality</p>
+                    <select
+                      class="form-control"
+                      id="event_modality"
+                      required
+                      onchange="updateLocationOptions(this.value)"
+                    >
+                      <option value="in-person" default>In Person</option>
+                      <option value="remote">Remote</option>
+                    </select>
+
+                    <p id="event_location_title">Location</p>
+                    <input type="text" id="event_location"/>
+                    <p id="event_remote_url_title" hidden="true">Remote URL</p>
+                    <input type="text" pattern="[a-zA-Z0-9]{1,256}\.\.[a-zA-Z0-9]{1,256}" required aria-required="true" hidden="true" onchange="checkValidURL()" aria-required="true" id="event_remote_url"/>
+                    
+                    <span class="text" hidden = true id="reminder">Enter a valid URL.</span>
+                  
+                  <p>Attendees</p>
+                  <input type="text" id="event_attendees"/>
+
+                    
+        
+              
+                  <div class="modal-footer"> 
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                  <button class="btn btn-primary" type="submit" onclick="saveEvent()">
+                    Create Event
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+  </body>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <script>
       // Generate a calendar for the specified year and month (0-based month index)
       function generateCalendar(year, month) {
@@ -121,5 +212,4 @@
         generateCalendar(thisYear, thisMonth);
       });
     </script>
-  </body>
 </html>
