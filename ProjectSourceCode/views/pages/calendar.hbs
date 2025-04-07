@@ -36,6 +36,41 @@
         background: #fafafa;
       }
     </style>
+    <meta charset="UTF-8" />
+    <title>Big Calendar</title>
+    <style>
+      /* Simple styling to make the calendar bigger and more readable */
+      #calendarContainer {
+        width: 80%;
+        margin: 0 auto;
+        margin-top: 2rem;
+      }
+
+      #calendarTitle {
+        text-align: center;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-family: Arial, sans-serif;
+        font-size: 1.1rem;
+      }
+
+      th, td {
+        border: 1px solid #ccc;
+        text-align: center;
+        height: 3rem;
+      }
+
+      th {
+        background: #f2f2f2;
+      }
+
+      .empty {
+        background: #fafafa;
+      }
+    </style>
   </head>
   <body>
     <h1 id="calendarTitle">Loading Calendar...</h1>
@@ -60,30 +95,72 @@
           <div class="modal-dialog">
             <div class="modal-content">
               <div class="modal-header">
-                <h5 class="modal-title">Create a new Event!</h5>
+                <h5 class="modal-title">Modal title</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
               <div class="modal-body">
-                  <form method="post" action="/calendar">
+                  <form id="modal_form">
 
                     <p>Event Name</p>
-                    <input type="text" name="event_name"/>
+                    <input type="text" id="event_name"/>
 
                     <p>Category</p>
-                    <input type="text" name="event_category"/>
+                    <select
+                      class="form-control"
+                      id="event_category"
+                      required
+                    >
+                      <option value="classes" default>Classes</option>
+                      <option value="home">Home</option>
+                      <option value="free-time">Free Time</option>
+                      <option value="misc">Misc.</option>
+                    </select>
 
-                    <p>Date</p>
-                    <input type="date" name="event_date">
-                  
+                    <p>Weekday</p>
+                    <select
+                      class="form-control"
+                      id="event_weekday"
+                      required
+                    >
+                      <option value="monday" default>Monday</option>
+                      <option value="tuesday">Tuesday</option>
+                      <option value="wednesday">Wednesday</option>
+                      <option value="thursday">Thursday</option>
+                      <option value="friday">Friday</option>
+                    </select>
+
                     <p>Time</p>
-                    <input type="time" name="event_time">
+                    <input type="time" id="event_time">
                     
-                    <p>Description</p>
-                    <textarea rows="5" cols="60" name="event_description"></textarea>
 
+
+                    <p>Event Modality</p>
+                    <select
+                      class="form-control"
+                      id="event_modality"
+                      required
+                      onchange="updateLocationOptions(this.value)"
+                    >
+                      <option value="in-person" default>In Person</option>
+                      <option value="remote">Remote</option>
+                    </select>
+
+                    <p id="event_location_title">Location</p>
+                    <input type="text" id="event_location"/>
+                    <p id="event_remote_url_title" hidden="true">Remote URL</p>
+                    <input type="text" pattern="[a-zA-Z0-9]{1,256}\.\.[a-zA-Z0-9]{1,256}" required aria-required="true" hidden="true" onchange="checkValidURL()" aria-required="true" id="event_remote_url"/>
+                    
+                    <span class="text" hidden = true id="reminder">Enter a valid URL.</span>
+                  
+                  <p>Attendees</p>
+                  <input type="text" id="event_attendees"/>
+
+                    
+        
+              
                   <div class="modal-footer"> 
                   <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                  <button class="btn btn-primary" type="submit">
+                  <button class="btn btn-primary" type="submit" onclick="saveEvent()">
                     Create Event
                   </button>
                 </div>
@@ -94,6 +171,82 @@
       </div>
   </body>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script>
+      // Generate a calendar for the specified year and month (0-based month index)
+      function generateCalendar(year, month) {
+        const monthNames = [
+          "January", "February", "March", "April", "May", "June",
+          "July", "August", "September", "October", "November", "December"
+        ];
+
+        // Use a Date object to figure out the first day and number of days in the month
+        const firstDay = new Date(year, month, 1);
+        const daysInMonth = new Date(year, month + 1, 0).getDate(); // e.g. Apr+1=May, day=0 => last day of Apr
+
+        // Title
+        const calendarTitle = document.getElementById("calendarTitle");
+        calendarTitle.textContent = `${monthNames[month]} ${year}`;
+
+        // Table element
+        const calendarTable = document.getElementById("calendarTable");
+        calendarTable.innerHTML = ""; // Clear any existing table rows
+
+        // Row for day names
+        const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+        let headerRow = document.createElement("tr");
+        dayNames.forEach(day => {
+          let th = document.createElement("th");
+          th.textContent = day;
+          headerRow.appendChild(th);
+        });
+        calendarTable.appendChild(headerRow);
+
+        // Determine the day of the week for the 1st of the month
+        let startDay = firstDay.getDay(); // 0=Sunday, 1=Monday, etc.
+
+        // We’ll build rows for each week
+        let currentRow = document.createElement("tr");
+
+        // Fill in empty cells before the first day of the month
+        for (let i = 0; i < startDay; i++) {
+          let emptyCell = document.createElement("td");
+          emptyCell.className = "empty";
+          currentRow.appendChild(emptyCell);
+        }
+
+        // Fill in cells for each date of the month
+        for (let date = 1; date <= daysInMonth; date++) {
+          // If we’ve reached Sunday again (day 0) and it’s not the first row, start a new row
+          if ((startDay + date - 1) % 7 === 0 && date > 1) {
+            calendarTable.appendChild(currentRow);
+            currentRow = document.createElement("tr");
+          }
+          
+          let cell = document.createElement("td");
+          cell.textContent = date;
+          currentRow.appendChild(cell);
+        }
+
+        // If the last row is not complete, fill the remaining cells with empty days
+        let remainingCells = 7 - currentRow.children.length;
+        for (let i = 0; i < remainingCells; i++) {
+          let emptyCell = document.createElement("td");
+          emptyCell.className = "empty";
+          currentRow.appendChild(emptyCell);
+        }
+
+        // Append the last row
+        calendarTable.appendChild(currentRow);
+      }
+
+      // On page load, generate the calendar for the current month
+      document.addEventListener("DOMContentLoaded", () => {
+        const today = new Date();
+        const thisYear = today.getFullYear();
+        const thisMonth = today.getMonth(); // 0-based
+        generateCalendar(thisYear, thisMonth);
+      });
+    </script>
     <script>
       // Generate a calendar for the specified year and month (0-based month index)
       function generateCalendar(year, month) {
