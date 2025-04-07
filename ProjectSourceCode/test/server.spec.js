@@ -1,7 +1,9 @@
 // ********************** Initialize server **********************************
 
 
-const server = require('../src/index'); //TODO: Make sure the path to your index.js is correctly added
+const server = require('../index'); //TODO: Make sure the path to your index.js is correctly added
+const pgp = require('pg-promise')(); // To connect to the Postgres DB from the node server
+
 
 
 // ********************** Import Libraries ***********************************
@@ -11,6 +13,17 @@ const chaiHttp = require('chai-http');
 chai.should();
 chai.use(chaiHttp);
 const {assert, expect} = chai;
+
+// database configuration
+const dbConfig = {
+    host: 'db', // the database server
+    port: 5432, // the database port
+    database: process.env.POSTGRES_DB, // the database name
+    user: process.env.POSTGRES_USER, // the user account to connect with
+    password: process.env.POSTGRES_PASSWORD, // the password of the user account
+  };
+  
+  const db = pgp(dbConfig);
 
 // ********************** DEFAULT WELCOME TESTCASE ****************************
 
@@ -48,3 +61,33 @@ describe('Testing Register API', () => {
         });
     });
   });
+
+
+
+//negative unit test for /register = returns error message for (if the username is already taken?)
+describe('Testing register path', ()=>{
+    it('negative : /register', done => {
+        chai
+            .request(server)
+            .post('/register')
+            .send({username:"test_user", password:"password"})
+            .end((err,res)=>{
+                //send second request with same username
+                chai  
+                    .request(server)
+                    .post('/register')
+                    .send({username:"test_user", password:"password"})
+                    .end(async (err,res)=>{
+                        expect(res).to.have.status(400)
+                        expect(res.text).to.include("This username is already taken");
+                        try {
+                            await db.query('DELETE FROM users WHERE username = $1', ['test_user']);
+                            done();
+                        }
+                        catch(err){
+                            done(err);
+                        }
+                    });
+            });
+    });
+});
