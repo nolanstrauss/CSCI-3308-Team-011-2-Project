@@ -1,6 +1,8 @@
 // ********************** Initialize server **********************************
 
+
 const server = require('../src/index'); //TODO: Make sure the path to your index.js is correctly added
+
 
 // ********************** Import Libraries ***********************************
 
@@ -30,6 +32,7 @@ describe('Server!', () => {
 // *********************** TODO: WRITE 2 UNIT TESTCASES **************************
 
 // ********************************************************************************
+
 
 //Positive test case for /register route
 describe('Testing Register API', () => {
