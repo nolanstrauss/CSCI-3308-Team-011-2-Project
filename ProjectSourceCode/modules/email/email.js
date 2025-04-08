@@ -14,7 +14,6 @@ const transporter = nodemailer.createTransport({
     },
 });
 
-
 // Events
 // structure to store active events
 class Events {
@@ -46,6 +45,10 @@ class Events {
 
   get length() {
     return this.events.length;
+  }
+
+  get(i) {
+    return this.events[i];
   }
 }
 
@@ -82,8 +85,10 @@ async function sendEmail(to, subject, text, html) {
 // upon creation of an event, send a confirmation email to all recipients
 let sendConfirmationEmail = async (event) => {
   // subject and html to be updated later in my next task
+
+  // sample, will be updated in next task
   let subject = `New Event: ${event.event_name}`
-  let html = `<div>Your event ${event.event_name} starts at ${event.event_time}<div>`
+  let html = `<div>Your event ${event.event_name} starts at ${new Date(event.event_time).toLocaleString()}<div>`
   // go recipient each email and send the email :O
   for(let i = 0; i<event.user_emails.length; i++) {
     let curr_email = event.user_emails[i];
@@ -99,8 +104,13 @@ let sendConfirmationEmail = async (event) => {
 // done automatically in event loop, do not export
 let sendReminderEmail = async (event) => {
   // subject and html to be updated later in my next task
+
+  // sample, will be updated in next task
   let subject = `Event Upcoming: ${event.event_name}`
-  let html = `<div>Your event ${event.event_name} starts at ${event.event_time}<div>`
+  let html = `<div>Your event ${event.event_name} starts in ${event.reminder_time >= 60 
+      ? `${Math.floor(event.reminder_time/60)} hours and ${event.reminder_time%60} minutes`
+      : `${event.reminder_time} minute${event.reminder_time !== 1 ? 's' : ''}`}`
+  html += `<p>Event time: ${new Date(event.event_time).toLocaleString()}</p><div>`
   for(let i = 0; i<event.user_emails.length; i++) {
     let curr_email = event.user_emails[i];
     try {
@@ -118,9 +128,9 @@ let EmailEventLoop = async() => {
     // check if n minutes before someones event
     // go from end to front of list so we dont have weird indexing issues after removals
     for(let i = events.length-1; i>=0; i--) {
-      if(events[i].event_time-events[i].reminder_time <= currTime) {
+      if(events.get(i).event_time- (events.get(i).reminder_time*60000) <= currTime) {
         // send email to each recipient
-        await sendReminderEmail(events[i]);
+        await sendReminderEmail(events.get(i));
         // remove event from set
         events.removeEventById(i);
       }
@@ -128,15 +138,11 @@ let EmailEventLoop = async() => {
   },60000)//repeat every minute
 }
 
-
-
-
 // upon import, begin email event loop 
 (async ()=>{
     console.log("Email Event Loop Started!")
     EmailEventLoop()
 })()
-
 
 // public methods
 let createEvent = async(user_emails,event_name,event_time,reminder_time) => {
@@ -146,7 +152,9 @@ let createEvent = async(user_emails,event_name,event_time,reminder_time) => {
     await sendConfirmationEmail(event);
   } catch {
     console.log("failed to send confirmation email")
+    return;
   }
-}
 
-export default {createEvent}
+  events.push(event);
+}
+module.exports = {createEvent}
