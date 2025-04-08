@@ -21,7 +21,7 @@ Verify that users can register successfully with valid credentials and that inva
 - Confirm that error messages are displayed for invalid inputs.
 
 ### **User Acceptance Testers**
-- Team Member 1: [Name]
+- Team Member 1: [TylerPaccione]
 - Team Member 2: [Name]
 
 ---
@@ -47,7 +47,7 @@ Ensure that users can log in with valid credentials and are redirected to the ap
 - Confirm that error messages are displayed for invalid credentials.
 
 ### **User Acceptance Testers**
-- Team Member 1: [Name]
+- Team Member 1: [TylerPaccione]
 - Team Member 2: [Name]
 
 ---
@@ -74,7 +74,7 @@ Ensure that users can view their calendar events after logging in.
 - Ensure unauthorized users are redirected to the login page.
 
 ### **User Acceptance Testers**
-- Team Member 1: [Tyler Paccione]
+- Team Member 1: [TylerPaccione]
 - Team Member 2: [Name]
 
 ---
