@@ -6,9 +6,11 @@ CREATE TABLE users
 
 CREATE TABLE events
 (
-    eventID VARCHAR(50) PRIMARY KEY,
-    eventName VarChar(120),
-    eventTime time(0),
-    eventDate DATE,
-    user VARCHAR(50)
+    eventID SERIAL PRIMARY KEY,
+    eventName VarChar(120) NOT NULL,
+    eventCategory VarChar (120),
+    eventDate DATE NOT NULL,
+    eventTime time(0) NOT NULL,
+    eventDescription TEXT,
+    eventUser VARCHAR(50) NOT NULL
 );

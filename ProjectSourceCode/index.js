@@ -167,13 +167,6 @@ app.use('/logout', auth);
 
 app.get('/logout', (req, res) => 
   {
-    /*
-    req.session.user = currentUser;
-      req.session.save();
-      res.redirect(redirectPath);
-    */
-
-
     req.session.currentUser = null;
     req.session.destroy();
     res.render('pages/logout',{message: "Logged out successfully!"});
@@ -181,14 +174,24 @@ app.get('/logout', (req, res) =>
 
 app.get('/calendar', async (req, res) => 
   {
-    /*
-        Only functional once event table is created, and add events functionality is added.
-    */
-
-    const username = req.session.currentUser;
-
-    var query = `SELECT eventName, eventDate, eventTime FROM events WHERE user = '${username}';`;
+    var quer = `SELECT * FROM events;`;
     let results = [];
+    try 
+    {
+      results = await db.any(quer);
+      console.log(results);
+    } 
+    catch (err) 
+    {
+      console.log("Error occured in finding .");
+    }
+
+
+
+    const username = req.session.currentUser[0].username;
+    console.log(username);
+    var query = `SELECT eventName, eventCategory, eventDate, eventTime, eventDescription FROM events WHERE eventUser = '${username}';`;
+    results = [];
     try 
     {
       results = await db.any(query);
@@ -203,9 +206,33 @@ app.get('/calendar', async (req, res) =>
 
   app.post('/calendar', async (req, res) => 
   {
-    /*
-        Add functionality to insert a new calendar event into events table here.
-    */
+    const eventName = req.body.event_name;
+    const eventCategory = req.body.event_category;
+    const eventDate = req.body.event_date;
+    const eventTime = req.body.event_time;
+    const eventDesc = req.body.event_description;
+    const username = req.session.currentUser[0].username;
+
+    console.log(eventName);
+    console.log(eventCategory);
+    console.log(eventDate);
+    console.log(eventTime);
+    console.log(eventDesc);
+    console.log(username);
+    
+    var query = `INSERT INTO events (eventName, eventCategory, eventDate, eventTime, eventDescription, eventUser) VALUES ('${eventName}','${eventCategory}','${eventDate}','${eventTime}','${eventDesc}','${username}');`;
+    var redirectPath = '/login';
+    try 
+    {
+      let results = await db.any(query);
+      console.log("Successfully created event.");
+      
+      res.redirect('/calendar');
+    } 
+    catch (err) 
+    {
+      console.log("error in inserting event into table.");
+    };
   });
 
 // *****************************************************
