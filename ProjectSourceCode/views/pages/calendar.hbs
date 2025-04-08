@@ -43,8 +43,57 @@
       <table id="calendarTable">
         <!-- We’ll populate this table dynamically with JS. -->
       </table>
-    </div>
+      <div class="row">
+          <div class="col-2">
+              <div class="custom-container">
+                <button
+                  class="btn btn-primary mt-3"
+                  data-bs-toggle="modal"
+                  data-bs-target="#event_modal" 
+                >
+                  Create Event
+                </button>
+              </div>
+          </div>
+      </div>
+      <div class="modal" tabindex="-1" id="event_modal">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">Create a new Event!</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                  <form method="post" action="/calendar">
 
+                    <p>Event Name</p>
+                    <input type="text" name="event_name"/>
+
+                    <p>Category</p>
+                    <input type="text" name="event_category"/>
+
+                    <p>Date</p>
+                    <input type="date" name="event_date">
+                  
+                    <p>Time</p>
+                    <input type="time" name="event_time">
+                    
+                    <p>Description</p>
+                    <textarea rows="5" cols="60" name="event_description"></textarea>
+
+                  <div class="modal-footer"> 
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                  <button class="btn btn-primary" type="submit">
+                    Create Event
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+  </body>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <script>
       // Generate a calendar for the specified year and month (0-based month index)
       function generateCalendar(year, month) {
@@ -121,5 +170,4 @@
         generateCalendar(thisYear, thisMonth);
       });
     </script>
-  </body>
 </html>
