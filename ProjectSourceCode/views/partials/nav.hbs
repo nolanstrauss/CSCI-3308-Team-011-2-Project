@@ -1,31 +1,77 @@
 <header>
- <nav class="navbar navbar-expand-sm border-bottom">
+ <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
    <div class="container">
+     <!-- Website Name -->
+     <a class="navbar-brand fw-bold" href="/">
+       TimeBridge Calendar
+     </a>
+
+
+     <!-- Toggler for Mobile View -->
      <button
-       class="navbar-toggler ms-auto"
+       class="navbar-toggler"
        type="button"
        data-bs-toggle="collapse"
        data-bs-target="#navbar-collapse"
-       aria-controls="navbar"
+       aria-controls="navbar-collapse"
        aria-expanded="false"
        aria-label="Toggle navigation">
        <span class="navbar-toggler-icon"></span>
      </button>
+
+
+     <!-- Navigation Links -->
      <div class="collapse navbar-collapse" id="navbar-collapse">
        <ul class="navbar-nav me-auto">
+      <!-- View Calendar -->
          <li class="nav-item">
-           <!-- TODO: For Discover, add a <a> tag with an attribute href to call the '/discover' API -->
-           <a class="nav-link" href="{{#if user}}/calendar{{else}}/{{/if}}">View Calendar</a>
+           <a class="nav-link" href="/calendar">View Calendar</a>
+         </li>
+
+
+         <!-- Edit Calendar -->
+         <li class="nav-item">
+           <a class="nav-link" href="/edit-calendar">Edit Calendar</a>
+         </li>
+
+
+         <!-- Manage Invitations -->
+         <li class="nav-item">
+           <a class="nav-link" href="/manage-invitations">Manage Invitations</a>
          </li>
        </ul>
-       <div class="nav-item me-1">
-         <!-- TODO: For Logout, add a <a> tag with an attribute href to call the '/logout API -->
-        {{#if user}}
-            <a class="nav-link" href="/logout">Logout</a>
-        {{else}}
-            <a class="nav-link" href="/login">Login</a>
-        {{/if}}
-       </div>
+
+
+       <!-- Right-Side Navigation -->
+       <ul class="navbar-nav ms-auto">
+         <!-- User-Specific Links -->
+         {{#if user}}
+           <!-- Dropdown for User Actions -->
+           <li class="nav-item dropdown">
+             <a
+               class="nav-link dropdown-toggle"
+               href="#"
+               id="userDropdown"
+               role="button"
+               data-bs-toggle="dropdown"
+               aria-expanded="false">
+               Welcome, {{user.username}}
+             </a>
+             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+               <li><a class="dropdown-item" href="/profile">Profile</a></li> <!-- to be completed -->
+               <li><a class="dropdown-item" href="/settings">Settings</a></li> <!-- to be completed -->
+               <li><a class="dropdown-item" href="/inivtations">Invitations</a></li> <!-- to be completed -->
+               <li><hr class="dropdown-divider"></li>
+               <li><a class="dropdown-item text-danger" href="/logout">Logout</a></li>
+             </ul>
+           </li>
+         {{else}}
+           <!-- Login Button -->
+           <li class="nav-item">
+             <a class="nav-link btn btn-outline-primary px-3" href="/login">Login</a>
+           </li>
+         {{/if}}
+       </ul>
      </div>
    </div>
  </nav>
