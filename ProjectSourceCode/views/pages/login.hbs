@@ -1,5 +1,5 @@
 <h1>Login</h1>
-<form method="post" action="/login">
+<form id="loginForm" method="POST" action="/login">
   <div>
     <label for="username">Username:</label>
     <input type="text" id="username" name="username" />
@@ -18,8 +18,16 @@
   const usernameInput = document.getElementById('username');
   const passwordInput = document.getElementById('password');
 
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    console.log('After delay, Username:', usernameInput.value);
+  }, 500); // delay 500ms to let auto-fill finish
+});
+
+
   // Helper function to check if both username and password are filled out
   function isFormValid() {
+    console.log('Username:', usernameInput.value, 'Password:', passwordInput.value);
     return usernameInput.value.trim() !== '' && passwordInput.value.trim() !== '';
   }
 
