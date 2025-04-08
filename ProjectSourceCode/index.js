@@ -89,6 +89,11 @@ app.get('/login', (req, res) =>
     res.render('pages/login',{});
   });
 
+app.get('/welcome', (req, res) => {
+  res.json({status: 'success', message: 'Welcome!'});
+  res.render('pages/welcome',{});
+});
+
 //Login
 app.post('/login', async (req, res) => {
 
@@ -134,8 +139,36 @@ app.post('/register', async (req, res) => {
   //hash the password using bcrypt library
   const hash = await bcrypt.hash(req.body.password, 10);
   const username = req.body.username;
+  
+  //make sure the username is not already taken in the database 
 
-  const user = await db.oneOrNone('SELECT username, password FROM users WHERE username=$1',[username]);
+  const user_exists = await db.oneOrNone('SELECT username, password FROM users WHERE username=$1',[username]);
+
+  if(user_exists){
+    return res.status(400).render('pages/register', {
+      error: true, 
+      message:"This username is already taken"
+    });
+  }
+
+  //Insert username and hashed password into the 'users' table
+  var query = `INSERT INTO users (username, password) VALUES ('${req.body.username}','${hash}');`;
+  var redirectPath = '/login';
+  try 
+  {
+    let results = await db.any(query);
+    /*res.status(200).json(
+      {
+      data: results,
+      });*/
+  } 
+  catch (err) 
+  {
+    /*res.status(400).json({
+      error: err,
+    });*/
+    redirectPath = '/register'
+  };
 
   if(user){
       return res.render('pages/register', {error:true, message:"Username taken"});
@@ -235,9 +268,12 @@ app.get('/calendar', async (req, res) =>
     };
   });
 
+
+
 // *****************************************************
 // <!-- Section 5 : Start Server-->
 // *****************************************************
 // starting the server and keeping the connection open to listen for more requests
-app.listen(3000);
+module.exports = app.listen(3000);
 console.log('Server is listening on port 3000');
+

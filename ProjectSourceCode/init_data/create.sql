@@ -4,6 +4,12 @@ CREATE TABLE users
     password VARCHAR(60) NOT NULL
 );
 
+CREATE TABLE users_to_events
+(
+    username VARCHAR(50),
+    eventID VARCHAR(50)
+);
+
 CREATE TABLE events
 (
     eventID SERIAL PRIMARY KEY,
