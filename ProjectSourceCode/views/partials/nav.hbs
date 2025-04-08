@@ -1,20 +1,23 @@
 <header>
   <nav class="navbar navbar-expand-sm border-bottom">
     <div class="container">
+      <!-- Replace "timebridge" with any name or logo you prefer -->
+      <a class="navbar-brand" href="/">timebridge</a>
       <button
         class="navbar-toggler ms-auto"
         type="button"
         data-bs-toggle="collapse"
         data-bs-target="#navbar-collapse"
-        aria-controls="navbar"
+        aria-controls="navbar-collapse"
         aria-expanded="false"
         aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
+
       <div class="collapse navbar-collapse" id="navbar-collapse">
         <ul class="navbar-nav me-auto">
           <li class="nav-item custom-box">
-            <!-- For Discover, the link directs to /calendar if logged in, or the home page otherwise -->
+            <!-- Link directs to /calendar if logged in, or the home page otherwise -->
             <a class="nav-link" href="{{#if user}}/calendar{{else}}/{{/if}}">View Calendar</a>
           </li>
         </ul>
@@ -46,7 +49,7 @@
     border-radius: 5px;
     display: inline-flex;
     align-items: center;
-    min-height: 40px;  /* Adjust this value as needed to match your design */
+    min-height: 40px; /* Adjust this value as needed to match your design */
   }
 
   .custom-box .nav-link {
