@@ -76,7 +76,7 @@ app.use(
 
 // TODO - Include your API routes here
 app.get('/', (req, res) => {
-  res.redirect('/welcome'); // Redirect to the `/welcome` route
+  res.redirect('/login'); // Redirect to the `/login` route
 });
 
 app.get('/register', (req, res) => 
@@ -161,16 +161,9 @@ app.post('/register', async (req, res) => {
   try 
   {
     let results = await db.any(query);
-    /*res.status(200).json(
-      {
-      data: results,
-      });*/
   } 
   catch (err) 
   {
-    /*res.status(400).json({
-      error: err,
-    });*/
     redirectPath = '/register'
   };
 
@@ -211,20 +204,6 @@ app.get('/logout', (req, res) =>
 
 app.get('/calendar', async (req, res) => 
   {
-    var quer = `SELECT * FROM events;`;
-    let results = [];
-    try 
-    {
-      results = await db.any(quer);
-      console.log(results);
-    } 
-    catch (err) 
-    {
-      console.log("Error occured in finding .");
-    }
-
-
-
     const username = req.session.currentUser[0].username;
     console.log(username);
     var query = `SELECT eventName, eventCategory, eventDate, eventTime, eventDescription FROM events WHERE eventUser = '${username}';`;
