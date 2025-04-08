@@ -107,9 +107,7 @@ let sendReminderEmail = async (event) => {
 
   // sample, will be updated in next task
   let subject = `Event Upcoming: ${event.event_name}`
-  let html = `<div>Your event ${event.event_name} starts in ${event.reminder_time >= 60 
-      ? `${Math.floor(event.reminder_time/60)} hours and ${event.reminder_time%60} minutes`
-      : `${event.reminder_time} minute${event.reminder_time !== 1 ? 's' : ''}`}`
+  let html = `<div>Your event ${event.event_name} starts in ${event.reminder_time} minutes.</div>`
   html += `<p>Event time: ${new Date(event.event_time).toLocaleString()}</p><div>`
   for(let i = 0; i<event.user_emails.length; i++) {
     let curr_email = event.user_emails[i];
