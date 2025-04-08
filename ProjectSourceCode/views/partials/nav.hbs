@@ -13,23 +13,22 @@
       </button>
       <div class="collapse navbar-collapse" id="navbar-collapse">
         <ul class="navbar-nav me-auto">
-          <li class="nav-item">
-            <!-- For Discover, the link is dynamic: directs to /calendar if logged in, or the home page otherwise -->
+          <li class="nav-item custom-box">
+            <!-- For Discover, the link directs to /calendar if logged in, or the home page otherwise -->
             <a class="nav-link" href="{{#if user}}/calendar{{else}}/{{/if}}">View Calendar</a>
           </li>
         </ul>
         <div class="d-flex">
-          <!-- If a user is logged in, show the Logout option -->
           {{#if user}}
             <div class="nav-item me-1">
               <a class="nav-link" href="/logout">Logout</a>
             </div>
           {{else}}
-            <!-- Otherwise, show Login and Register options -->
-            <div class="nav-item me-1">
+            <!-- Custom styled boxes for Login and Register -->
+            <div class="nav-item me-1 custom-box">
               <a class="nav-link" href="/login">Login</a>
             </div>
-            <div class="nav-item me-1">
+            <div class="nav-item me-1 custom-box">
               <a class="nav-link" href="/register">Register</a>
             </div>
           {{/if}}
@@ -38,3 +37,19 @@
     </div>
   </nav>
 </header>
+
+<style>
+  /* Custom styling for nav items with boxes */
+  .custom-box {
+    border: 1px solid #ccc;
+    padding: 5px 10px;
+    border-radius: 5px;
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;  /* Adjust this value as needed to match your design */
+  }
+
+  .custom-box .nav-link {
+    margin: 0;
+  }
+</style>
