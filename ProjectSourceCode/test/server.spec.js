@@ -46,6 +46,20 @@ describe('Server!', () => {
 
 // ********************************************************************************
 
+describe("Testing get non existent endpoint ", ()=> {
+  it("Negative: get non existent endpoint /fake/route", (done) => {
+    chai.request(server).get("/fake/route").end((err,res) => {
+        if (err) {
+          return done(err);
+        }
+
+        expect(res).to.have.status(404); // Expecting a 404, resource not found
+        done();
+    })
+  })
+})
+
+
 
 //Positive test case for /register route
 describe('Testing Register API', () => {
@@ -61,7 +75,6 @@ describe('Testing Register API', () => {
         });
     });
   });
-
 
 
 //negative unit test for /register = returns error message for (if the username is already taken?)
