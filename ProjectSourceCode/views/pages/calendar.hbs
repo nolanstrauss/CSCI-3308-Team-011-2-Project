@@ -64,29 +64,26 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
               <div class="modal-body">
-                  <form id="modal_form">
+                  <form method="post" action="/calendar">
 
                     <p>Event Name</p>
-                    <input type="text" id="event_name"/>
+                    <input type="text" name="event_name"/>
 
                     <p>Category</p>
-                    <input type="text" id="event_category"/>
+                    <input type="text" name="event_category"/>
 
                     <p>Date</p>
-                    <input type="date" id="birthday" name="birthday">
+                    <input type="date" name="event_date">
                   
                     <p>Time</p>
-                    <input type="time" id="event_time">
+                    <input type="time" name="event_time">
                     
                     <p>Description</p>
-                    <textarea rows="5" cols="60" id="event_description"></textarea>
-                    
-                    <p>Target Email</p>
-                    <input type="text" id="event_attendees"/>
+                    <textarea rows="5" cols="60" name="event_description"></textarea>
 
                   <div class="modal-footer"> 
                   <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                  <button class="btn btn-primary" type="submit" onclick="saveEvent()">
+                  <button class="btn btn-primary" type="submit">
                     Create Event
                   </button>
                 </div>
