@@ -46,19 +46,6 @@ describe('Server!', () => {
 
 // ********************************************************************************
 
-describe("Testing get non existent endpoint ", ()=> {
-  it("Negative: get non existent endpoint /fake/route", (done) => {
-    chai.request(server).get("/fake/route").end((err,res) => {
-        if (err) {
-          return done(err);
-        }
-
-        expect(res).to.have.status(404); // Expecting a 404, resource not found
-        done();
-    })
-  })
-})
-
 
 
 //Positive test case for /register route
@@ -70,7 +57,7 @@ describe('Testing Register API', () => {
         .send({ username: 'testuser', password: 'TestPassword123' }) // Valid input
         .end(async (err, res) => {
           expect(res).to.have.status(200); // Expecting a 200 status for success
-          expect(res.text).to.include('success'); // Adjust based on your API's success message
+          expect(res.body.message).to.equals('success'); // Adjust based on your API's success message
           await db.query('DELETE FROM users WHERE username = $1', ['testuser']);
           done();
         });
@@ -105,3 +92,35 @@ describe('Testing register path', ()=>{
             });
     });
 });
+
+
+// *********************** 2 UNIT TESTCASES non-register**************************
+
+// ********************************************************************************
+
+
+describe('GET /calendar (Unauthenticated)', () => {
+  it('should redirect unauthenticated users to /login', (done) => {
+    chai.request(server)
+      .get('/calendar')
+      .redirects(0)  
+      .end((err, res) => {
+        expect(res).to.have.status(302);
+        expect(res).to.have.header('location', '/login');
+        done();
+      });
+  });
+});
+
+describe("Testing get non existent endpoint ", ()=> {
+  it("Negative: get non existent endpoint /fake/route", (done) => {
+    chai.request(server).get("/fake/route").end((err,res) => {
+        if (err) {
+          return done(err);
+        }
+
+        expect(res).to.have.status(404); // Expecting a 404, resource not found
+        done();
+    })
+  })
+})
