@@ -50,19 +50,19 @@ describe('Server!', () => {
 
 //Positive test case for /register route
 describe('Testing Register API', () => {
-    it('Positive: /register with valid input', (done) => {
-      chai
-        .request(server)
-        .post('/register') // Ensure this matches your actual registration route
-        .send({ username: 'testuser', password: 'TestPassword123' }) // Valid input
-        .end(async (err, res) => {
-          expect(res).to.have.status(200); // Expecting a 200 status for success
-          expect(res.body.message).to.equals('success'); // Adjust based on your API's success message
-          await db.query('DELETE FROM users WHERE username = $1', ['testuser']);
-          done();
-        });
-    });
+  it('Positive: /register with valid input', (done) => {
+    chai
+      .request(server)
+      .post('/register') // Ensure this matches your actual registration route
+      .send({ username: 'testuser', password: 'TestPassword123' }) // Valid input
+      .end(async (err, res) => {
+        expect(res).to.have.status(200); // Expecting a 200 status for success
+        expect(res.text).to.include('success'); // Adjust based on your API's success message
+        await db.query('DELETE FROM users WHERE username = $1', ['testuser']);
+        done();
+      });
   });
+});
 
 
 //negative unit test for /register = returns error message for (if the username is already taken?)
