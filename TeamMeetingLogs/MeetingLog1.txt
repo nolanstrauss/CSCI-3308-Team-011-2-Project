@@ -1,0 +1,13 @@
+Minutes: 8 Minutes
+
+Decisions made
+ - Begin work on implementing API routes 
+Alternative actions/options discussed
+ - look at different services for sending emails
+Follow-up items, including agreed-on roles and responsibilities
+ - Caroline: setting up db and other backend features
+ - Nolan: Login 
+ - Hayden: Calendar homepage
+ - Charbel: Logout page
+ - Micah: Calendar email
+ - Tyler: Welcome page 
