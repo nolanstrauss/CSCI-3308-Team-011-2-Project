@@ -88,10 +88,10 @@ app.get('/login', (req, res) =>
   {
     res.render('pages/login',{});
   });
-
+/*
 app.get('/welcome', (req, res) => {
   res.json({status: 'success', message: 'Welcome!'});
-});
+});*/
   
 app.get('/welcome', (req, res) => {
   res.render('pages/welcome', {});
@@ -161,26 +161,17 @@ app.post('/register', async (req, res) => {
   try 
   {
     let results = await db.any(query);
+    res.render(redirectPath,{});
   } 
   catch (err) 
   {
     redirectPath = '/register'
+    res.render(redirectPath,{error:true, message:"Error when logging in"});
   };
-
+  /*
   if(user){
       return res.render('pages/register', {error:true, message:"Username taken"});
-  }
-  
-  var redirectPath = '/login';
-  await db.none(
-    'INSERT INTO users (username, password) VALUES ($1,$2)', [username, hash]
-).then(()=> {
-    res.redirect('pages/login');
-  })
-  .catch(error=>{
-    console.error(error);
-    res.redirect('pages/register', {error:true, message:"Error when logging in"});
-  });
+  }*/
 });
 
 
@@ -206,7 +197,7 @@ app.get('/calendar', async (req, res) =>
   {
     const username = req.session.currentUser[0].username;
     console.log(username);
-    var query = `SELECT eventName, eventCategory, eventDate, eventTime, eventDescription FROM events WHERE eventUser = '${username}';`;
+    var query = `SELECT eventName, eventCategory, eventDate, eventDescription FROM events WHERE eventUser = '${username}';`;
     results = [];
     try 
     {
@@ -226,17 +217,25 @@ app.get('/calendar', async (req, res) =>
     const eventCategory = req.body.event_category;
     const eventDate = req.body.event_date;
     const eventTime = req.body.event_time;
+    const eventReminderDelay = req.body.event_reminder_delay;
     const eventDesc = req.body.event_description;
+    const eventLink = req.body.event_link;
     const username = req.session.currentUser[0].username;
 
     console.log(eventName);
     console.log(eventCategory);
     console.log(eventDate);
     console.log(eventTime);
+    console.log(eventReminderDelay);
     console.log(eventDesc);
     console.log(username);
+
+    let combinedDateTimeString = req.body.event_date + 'T' + req.body.event_time;
+    let combinedDate = new Date(combinedDateTimeString);
+    const sqlDateTime = combinedDate.toISOString().slice(0, 19).replace('T', ' ');
+    console.log(sqlDateTime);
     
-    var query = `INSERT INTO events (eventName, eventCategory, eventDate, eventTime, eventDescription, eventUser) VALUES ('${eventName}','${eventCategory}','${eventDate}','${eventTime}','${eventDesc}','${username}');`;
+    var query = `INSERT INTO events (eventName, eventCategory, eventDate, eventReminderDelay, eventDescription, eventLink, eventUser) VALUES ('${eventName}','${eventCategory}','${sqlDateTime}','${eventReminderDelay}','${eventDesc}','${eventLink}','${username}');`;
     var redirectPath = '/login';
     try 
     {
