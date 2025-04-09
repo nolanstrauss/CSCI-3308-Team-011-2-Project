@@ -1,6 +1,7 @@
 <header>
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
-     <div class="container">
+ <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
+   <div class="container">
+
      <!-- Website Name -->
      <a class="navbar-brand fw-bold" href="/">
        TimeBridge Calendar
@@ -45,35 +46,33 @@
        <!-- Right-Side Navigation -->
        <ul class="navbar-nav ms-auto">
          <!-- User-Specific Links -->
-      {{#if user_exists}}
-        <li class="nav-item dropdown">
-          <a
-            class="nav-link dropdown-toggle"
-            href="#"
-            id="userDropdown"
-            role="button"
-            data-bs-toggle="dropdown"
-            aria-expanded="false">
-            Welcome, {{user.username}}
-          </a>
-          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-            <li><a class="dropdown-item" href="/profile">Profile</a></li>
-            <li><a class="dropdown-item" href="/settings">Settings</a></li>
-            <li><a class="dropdown-item" href="/invitations">Invitations</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item text-danger" href="/logout">Logout</a></li>
-          </ul>
-        </li>
-      {{else}}
-        <li class="nav-item">
-          <a class="nav-link btn btn-outline-primary px-3" href="/login">Login</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link btn btn-outline-primary px-3" href="/register">Register</a>
-        </li>
-      {{/if}}
-         <!-- Register Button -->
-  
+         {{#if user}}
+           <!-- Dropdown for User Actions -->
+           <li class="nav-item dropdown">
+             <a
+               class="nav-link dropdown-toggle"
+               href="#"
+               id="userDropdown"
+               role="button"
+               data-bs-toggle="dropdown"
+               aria-expanded="false">
+               Welcome, {{user.username}}
+             </a>
+             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+               <li><a class="dropdown-item" href="/profile">Profile</a></li> <!-- to be completed -->
+               <li><a class="dropdown-item" href="/settings">Settings</a></li> <!-- to be completed -->
+               <li><a class="dropdown-item" href="/inivtations">Invitations</a></li> <!-- to be completed -->
+               <li><hr class="dropdown-divider"></li>
+               <li><a class="dropdown-item text-danger" href="/logout">Logout</a></li>
+             </ul>
+           </li>
+         {{else}}
+           <!-- Login Button -->
+           <li class="nav-item">
+             <a class="nav-link btn btn-outline-primary px-3" href="/login">Login</a>
+           </li>
+         {{/if}}
+
        </ul>
      </div>
    </div>
