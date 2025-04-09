@@ -167,7 +167,7 @@ app.post('/register', async (req, res) => {
     redirectPath = '/register'
   };
 
-  if(user_exists){
+  if(user){
       return res.render('pages/register', {error:true, message:"Username taken"});
   }
   
