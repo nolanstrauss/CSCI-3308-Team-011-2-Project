@@ -1,4 +1,4 @@
-let confermation_email = (event,user_index) => {
+let confirmation_email_template = (event,user_index) => {
 
     let {user_emails,event_name,event_time,reminder_time} = event
 
@@ -25,7 +25,7 @@ let confermation_email = (event,user_index) => {
         </div>`
 }
 
-let reminder_email = (event,user_index) => {
+let reminder_email_template = (event,user_index) => {
 
     let {user_emails,event_name,event_time,reminder_time} = event
 
@@ -51,3 +51,6 @@ let reminder_email = (event,user_index) => {
         </div>
     </div>`
 }
+
+
+module.exports = {confirmation_email_template, reminder_email_template}
