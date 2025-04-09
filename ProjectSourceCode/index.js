@@ -74,7 +74,15 @@ app.use(
 // <!-- Section 4 : API Routes -->
 // *****************************************************
 
+
 // TODO - Include your API routes here
+
+app.use((req, res, next) => {
+  res.locals.user_exists = req.session.currentUser ? true : false;
+  res.locals.user = req.session.currentUser ? req.session.currentUser[0] : null;
+  next();
+});
+
 app.get('/', (req, res) => {
   res.redirect('/login'); // Redirect to the `/login` route
 });
@@ -139,49 +147,34 @@ app.post('/login', async (req, res) => {
   });
 
     // Register
-app.post('/register', async (req, res) => {
-  //hash the password using bcrypt library
-  const hash = await bcrypt.hash(req.body.password, 10);
-  const username = req.body.username;
-  
-  //make sure the username is not already taken in the database 
-
-  const user_exists = await db.oneOrNone('SELECT username, password FROM users WHERE username=$1',[username]);
-
-  if(user_exists){
-    return res.status(400).render('pages/register', {
-      error: true, 
-      message:"This username is already taken"
+    app.post('/register', async (req, res) => {
+      const username = req.body.username;
+      const password = req.body.password;
+    
+      try {
+        // Check if the username already exists
+        const userExists = await db.oneOrNone('SELECT username FROM users WHERE username = $1', [username]);
+    
+        if (userExists) {
+          return res.status(400).render('pages/register', {
+            error: true,
+            message: 'This username is already taken',
+          });
+        }
+    
+        // Hash the password and insert the new user
+        const hash = await bcrypt.hash(password, 10);
+        await db.none('INSERT INTO users (username, password) VALUES ($1, $2)', [username, hash]);
+    
+        res.redirect('/login');
+      } catch (err) {
+        console.error(err);
+        res.status(500).render('pages/register', {
+          error: true,
+          message: 'An error occurred while registering. Please try again.',
+        });
+      }
     });
-  }
-
-  //Insert username and hashed password into the 'users' table
-  var query = `INSERT INTO users (username, password) VALUES ('${req.body.username}','${hash}');`;
-  var redirectPath = '/login';
-  try 
-  {
-    let results = await db.any(query);
-  } 
-  catch (err) 
-  {
-    redirectPath = '/register'
-  };
-
-  if(user_exists){
-      return res.render('pages/register', {error:true, message:"Username taken"});
-  }
-  
-  var redirectPath = '/login';
-  await db.none(
-    'INSERT INTO users (username, password) VALUES ($1,$2)', [username, hash]
-).then(()=> {
-    res.redirect('pages/login');
-  })
-  .catch(error=>{
-    console.error(error);
-    res.redirect('pages/register', {error:true, message:"Error when logging in"});
-  });
-});
 
 
 // Authentication middleware.
