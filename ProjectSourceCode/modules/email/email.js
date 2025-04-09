@@ -2,11 +2,12 @@
 const nodemailer = require("nodemailer");
 // lodash for convenience 
 const _ = require("lodash")
-require("dotenv").config()
+
+// config env
+require("dotenv").config({path: "../../.env"});
 
 // import templates
 let {confirmation_email_template, reminder_email_template} = require("./templates")
-
 // config nodeMailer
 const transporter = nodemailer.createTransport({
     host: 'smtp-relay.brevo.com',
@@ -76,7 +77,7 @@ async function sendEmail(to, subject, text, html) {
         to,
         subject,
         text,
-        html,
+        html
       };
       const info = await transporter.sendMail(mailOptions);
       console.log(`Email sent: ${info.response}`);
@@ -95,9 +96,9 @@ let sendConfirmationEmail = async (event) => {
   for(let i = 0; i<event.user_emails.length; i++) {
     let html = confirmation_email_template(event,i);
     try {
-      await sendEmail(curr_email,subject,"",html)
+      await sendEmail(event.user_emails[i],subject,"",html)
     } catch {
-      console.log("failed to send email to: " + curr_email)
+      console.log("failed to send email to: " + event.user_emails[i])
     }
   }
 } 
@@ -112,9 +113,9 @@ let sendReminderEmail = async (event) => {
   for(let i = 0; i<event.user_emails.length; i++) {
     let html = reminder_email_template(event,i);
     try {
-      await sendEmail(curr_email,subject,"",html)
+      await sendEmail(event.user_emails[i],subject,"",html)
     } catch {
-      console.log("failed to send email to: " + curr_email)
+      console.log("failed to send email to: " + event.user_emails[i])
     }
   }
 }
@@ -148,11 +149,14 @@ let createEvent = async(user_emails,event_name,event_time,reminder_time) => {
   // send email
   try {
     await sendConfirmationEmail(event);
-  } catch {
+  } catch (e) {
+    console.log(e);
     console.log("failed to send confirmation email")
     return;
   }
 
   events.push(event);
 }
+
+
 module.exports = {createEvent}
