@@ -64,7 +64,6 @@ describe('Testing Register API', () => {
   });
 });
 
-
 //negative unit test for /register = returns error message for (if the username is already taken?)
 describe('Testing register path', ()=>{
     it('negative : /register', done => {
