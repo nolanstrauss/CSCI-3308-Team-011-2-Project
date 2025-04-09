@@ -1,9 +1,12 @@
 // import nodeMailer
 const nodemailer = require("nodemailer");
+// lodash for convenience 
 const _ = require("lodash")
 require("dotenv").config()
 
-// TODO: Implement user authentication
+// import templates
+let {confirmation_email_template, reminder_email_template} = require("./templates")
+
 // config nodeMailer
 const transporter = nodemailer.createTransport({
     host: 'smtp-relay.brevo.com',
@@ -88,10 +91,9 @@ let sendConfirmationEmail = async (event) => {
 
   // sample, will be updated in next task
   let subject = `New Event: ${event.event_name}`
-  let html = `<div>Your event ${event.event_name} starts at ${new Date(event.event_time).toLocaleString()}<div>`
   // go recipient each email and send the email :O
   for(let i = 0; i<event.user_emails.length; i++) {
-    let curr_email = event.user_emails[i];
+    let html = confirmation_email_template(event,i);
     try {
       await sendEmail(curr_email,subject,"",html)
     } catch {
@@ -107,10 +109,8 @@ let sendReminderEmail = async (event) => {
 
   // sample, will be updated in next task
   let subject = `Event Upcoming: ${event.event_name}`
-  let html = `<div>Your event ${event.event_name} starts in ${event.reminder_time} minutes.</div>`
-  html += `<p>Event time: ${new Date(event.event_time).toLocaleString()}</p><div>`
   for(let i = 0; i<event.user_emails.length; i++) {
-    let curr_email = event.user_emails[i];
+    let html = reminder_email_template(event,i);
     try {
       await sendEmail(curr_email,subject,"",html)
     } catch {
