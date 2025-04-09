@@ -22,7 +22,7 @@ Verify that users can register successfully with valid credentials and that inva
 
 ### **User Acceptance Testers**
 - Team Member 1: [TylerPaccione]
-- Team Member 2: [Name]
+- Team Member 2: [HaydenMartin]
 
 ---
 
@@ -48,7 +48,7 @@ Ensure that users can log in with valid credentials and are redirected to the ap
 
 ### **User Acceptance Testers**
 - Team Member 1: [TylerPaccione]
-- Team Member 2: [Name]
+- Team Member 2: [HaydenMartin]
 
 ---
 
@@ -75,7 +75,7 @@ Ensure that users can view their calendar events after logging in.
 
 ### **User Acceptance Testers**
 - Team Member 1: [TylerPaccione]
-- Team Member 2: [Name]
+- Team Member 2: [HaydenMartin]
 
 ---
 

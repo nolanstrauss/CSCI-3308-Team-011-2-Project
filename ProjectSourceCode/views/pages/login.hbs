@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- filepath: /ProjectSourceCode/views/pages/login.hbs -->
+  <div id="loginMessage"></div>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Login Page with Navbar</title>
@@ -96,6 +98,12 @@
     .custom-box .nav-link {
       margin: 0;
     }
+    #loginMessage {
+      text-align: center;
+      margin-bottom: 15px;
+      font-size: 40px;
+      color: red;
+    }
   </style>
 </head>
 <body>
@@ -155,13 +163,31 @@
       }
     });
 
-    // Prevent form submission if the fields are not filled
-    loginButton.addEventListener('click', (event) => {
-      if (!isFormValid()) {
-        event.preventDefault();
-        alert('Please enter both username and password before logging in!');
-      }
-    });
+// Prevent form submission if the fields are not filled
+// Store the original width in a variable outside the event listener
+let originalButtonWidth = loginButton.offsetWidth;
+
+loginButton.addEventListener('mouseover', (event) => {
+  if (!isFormValid()) {
+    event.preventDefault();
+    const messageEl = document.getElementById('loginMessage');
+    if (messageEl) {
+      messageEl.innerText = "Please enter login information before logging in!";
+    }
+
+    // Apply the stored, original width instead of recalculating on mouseover
+    loginButton.style.width = `${originalButtonWidth}px`;
+
+    const maxX = window.innerWidth - loginButton.offsetWidth;
+    const maxY = window.innerHeight - loginButton.offsetHeight;
+    const randomX = Math.floor(Math.random() * maxX);
+    const randomY = Math.floor(Math.random() * maxY);
+    loginButton.style.position = 'absolute';
+    loginButton.style.left = `${randomX}px`;
+    loginButton.style.top = `${randomY}px`;
+  }
+});
+
   </script>
 </body>
 </html>

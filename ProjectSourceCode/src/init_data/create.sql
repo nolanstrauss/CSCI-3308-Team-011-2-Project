@@ -12,7 +12,7 @@ CREATE TABLE users_to_events
 
 CREATE TABLE events
 (
-    eventID SERIAL PRIMARY KEY,
+    eventID VARCHAR(50) PRIMARY KEY,
     eventName VarChar(120) NOT NULL,
     eventCategory VarChar (120),
     eventDate DATE NOT NULL,
