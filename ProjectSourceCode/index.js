@@ -10,7 +10,7 @@ const path = require('path');
 const pgp = require('pg-promise')(); // To connect to the Postgres DB from the node server
 const bodyParser = require('body-parser');
 const session = require('express-session'); // To set the session object. To store or access session data, use the `req.session`, which is (generally) serialized as JSON by the store.
-const bcrypt = require('bcryptjs'); //  To hash passwords
+const bcrypt = require('bcryptjs'); // To hash passwords
 const axios = require('axios'); // To make HTTP requests from our server. We'll learn more about it in Part C.
 
 // *****************************************************
@@ -37,11 +37,11 @@ const db = pgp(dbConfig);
 
 // test your database
 db.connect()
-  .then(obj => {
+  .then((obj) => {
     console.log('Database connection successful'); // you can view this message in the docker compose logs
     obj.done(); // success, release the connection;
   })
-  .catch(error => {
+  .catch((error) => {
     console.log('ERROR:', error.message || error);
   });
 
@@ -74,110 +74,83 @@ app.use(
 // <!-- Section 4 : API Routes -->
 // *****************************************************
 
-
-// TODO - Include your API routes here
-
+// Place this code *after* setting up session, but *before* your routes
 app.use((req, res, next) => {
-  res.locals.user_exists = req.session.currentUser ? true : false;
+  // Store user information in locals to be used in our views
   res.locals.user = req.session.currentUser ? req.session.currentUser[0] : null;
   next();
 });
 
+// Redirect to /login by default
 app.get('/', (req, res) => {
-  res.redirect('/login'); // Redirect to the `/login` route
+  res.redirect('/login');
 });
 
-app.get('/register', (req, res) => 
-  {
-    res.render('pages/register',{});
-  });
-
-app.get('/login', (req, res) => 
-  {
-    res.render('pages/login',{});
-  });
-
-app.get('/welcome', (req, res) => {
-  res.json({status: 'success', message: 'Welcome!'});
+// Show the registration page with a flag (if needed)
+app.get('/register', (req, res) => {
+  res.render('pages/register', { routeIsRegister: true });
 });
-  
+
+// Show the login page and pass a flag so the navbar displays "Register" instead of "Login"
+app.get('/login', (req, res) => {
+  res.render('pages/login', { routeIsLogin: true });
+});
+
+// Welcome route
 app.get('/welcome', (req, res) => {
   res.render('pages/welcome', {});
 });
 
-
-//Login
+// Login route
 app.post('/login', async (req, res) => {
-
   const username = req.body.username;
-  var query = `SELECT username, password FROM users WHERE username = '${username}';`;
-  var redirectPath = '/calendar';
-  var currentUser = null;
-  try 
-  {
-    currentUser = await db.any(query);
-  } 
-  catch (err) 
-  {
-    res.redirect('/login');
-  };
+  const query = `SELECT username, password FROM users WHERE username = $1;`;
+  let currentUser;
 
-  if (currentUser.length == 0)
-  {
-    res.redirect('/register');
+  try {
+    currentUser = await db.any(query, [username]);
+  } catch (err) {
+    return res.redirect('/login');
   }
-  else
-  {
-    
-    const match = await bcrypt.compare(req.body.password, currentUser[0].password);
-    if (match)
-    {
-      req.session.currentUser = currentUser;
-      req.session.save();
-      res.redirect(redirectPath);
-    }
-    else
-    {
-      res.render('pages/login', {
-        error: true,
-        message: 'Username and Password do not match. Please try again.',
-      });
-    }
-  }
-  });
 
-    // Register
-    app.post('/register', async (req, res) => {
-      const username = req.body.username;
-      const password = req.body.password;
-    
-      try {
-        // Check if the username already exists
-        const userExists = await db.oneOrNone('SELECT username FROM users WHERE username = $1', [username]);
-    
-        if (userExists) {
-          return res.status(400).render('pages/register', {
-            error: true,
-            message: 'This username is already taken',
-          });
-        }
-    
-        // Hash the password and insert the new user
-        const hash = await bcrypt.hash(password, 10);
-        await db.none('INSERT INTO users (username, password) VALUES ($1, $2)', [username, hash]);
-    
-        res.redirect('/login');
-      } catch (err) {
-        console.error(err);
-        res.status(500).render('pages/register', {
-          error: true,
-          message: 'An error occurred while registering. Please try again.',
-        });
-      }
+  // If no such user, redirect to register
+  if (currentUser.length === 0) {
+    return res.redirect('/register');
+  }
+
+  // Compare password with hashed password
+  const match = await bcrypt.compare(req.body.password, currentUser[0].password);
+  if (match) {
+    // Store the user as an array to be compatible with our locas usage (we take index 0 later)
+    req.session.currentUser = currentUser;
+    req.session.save();
+    res.redirect('/calendar');
+  } else {
+    res.render('pages/login', {
+      error: true,
+      message: 'Username and Password do not match. Please try again.',
     });
+  }
+});
 
+// Register route
+app.post('/register', async (req, res) => {
+  const username = req.body.username;
+  const plainPassword = req.body.password;
+  const hash = await bcrypt.hash(plainPassword, 10);
+  const query = `INSERT INTO users (username, password) VALUES ($1, $2);`;
+  let redirectPath = '/login';
 
-// Authentication middleware.
+  try {
+    await db.any(query, [username, hash]);
+  } catch (err) {
+    // If there's a DB error (like duplicate username), go back to register
+    redirectPath = '/register';
+  }
+  res.redirect(redirectPath);
+});
+
+// Authentication middleware: redirects to /login if not authenticated
 const auth = (req, res, next) => {
   if (!req.session.currentUser) {
     return res.redirect('/login');
@@ -185,66 +158,68 @@ const auth = (req, res, next) => {
   next();
 };
 
+// Protect routes: calendar, logout, edit-calendar, and manage-invitations
 app.use('/calendar', auth);
 app.use('/logout', auth);
+app.use('/edit-calendar', auth);
+app.use('/manage-invitations', auth);
 
-app.get('/logout', (req, res) => 
-  {
-    req.session.currentUser = null;
-    req.session.destroy();
-    res.render('pages/logout',{message: "Logged out successfully!"});
-  });
-
-app.get('/calendar', async (req, res) => 
-  {
-    const username = req.session.currentUser[0].username;
-    console.log(username);
-    var query = `SELECT eventName, eventCategory, eventDate, eventTime, eventDescription FROM events WHERE eventUser = '${username}';`;
-    results = [];
-    try 
-    {
-      results = await db.any(query);
-      console.log("Successfully retrieved " +  results.length + " events");
-    } 
-    catch (err) 
-    {
-      console.log("Error occured in finding .");
+// Logout route: destroys the session, clears cookie, and explicitly sets user to null so the navbar displays "Login/Register"
+app.get('/logout', (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      return res.redirect('/');
     }
-    res.render('pages/calendar',{events: results});
+    res.clearCookie('connect.sid');
+    res.locals.user = null;
+    res.render('pages/logout', { message: "Logged out successfully!" });
   });
+});
 
-  app.post('/calendar', async (req, res) => 
-  {
-    const eventName = req.body.event_name;
-    const eventCategory = req.body.event_category;
-    const eventDate = req.body.event_date;
-    const eventTime = req.body.event_time;
-    const eventDesc = req.body.event_description;
-    const username = req.session.currentUser[0].username;
+// Calendar page - must be logged in
+app.get('/calendar', async (req, res) => {
+  const username = req.session.currentUser[0].username;
+  var query = `SELECT eventName, eventCategory, eventDate, eventTime, eventDescription FROM events WHERE eventUser = '${username}';`;
+  let results = [];
 
-    console.log(eventName);
-    console.log(eventCategory);
-    console.log(eventDate);
-    console.log(eventTime);
-    console.log(eventDesc);
-    console.log(username);
-    
-    var query = `INSERT INTO events (eventName, eventCategory, eventDate, eventTime, eventDescription, eventUser) VALUES ('${eventName}','${eventCategory}','${eventDate}','${eventTime}','${eventDesc}','${username}');`;
-    var redirectPath = '/login';
-    try 
-    {
-      let results = await db.any(query);
-      console.log("Successfully created event.");
-      
-      res.redirect('/calendar');
-    } 
-    catch (err) 
-    {
-      console.log("error in inserting event into table.");
-    };
-  });
+  try {
+    results = await db.any(query);
+    console.log("Successfully retrieved " + results.length + " events");
+  } catch (err) {
+    console.log("Error occured while retrieving events.");
+  }
 
+  res.render('pages/calendar', { events: results });
+});
 
+// Example protected route for editing the calendar
+app.get('/edit-calendar', (req, res) => {
+  res.render('pages/edit-calendar'); // Create this view accordingly
+});
+
+// Example protected route for managing invitations
+app.get('/manage-invitations', (req, res) => {
+  res.render('pages/manage-invitations'); // Create this view accordingly
+});
+
+// Route to create a new calendar event
+app.post('/calendar', async (req, res) => {
+  const eventName = req.body.event_name;
+  const eventCategory = req.body.event_category;
+  const eventDate = req.body.event_date;
+  const eventTime = req.body.event_time;
+  const eventDesc = req.body.event_description;
+  const username = req.session.currentUser[0].username;
+  
+  var query = `INSERT INTO events (eventName, eventCategory, eventDate, eventTime, eventDescription, eventUser) VALUES ('${eventName}','${eventCategory}','${eventDate}','${eventTime}','${eventDesc}','${username}');`;
+  try {
+    await db.any(query);
+    console.log("Successfully created event.");
+    res.redirect('/calendar');
+  } catch (err) {
+    console.log("Error in inserting event into table.");
+  }
+});
 
 // *****************************************************
 // <!-- Section 5 : Start Server-->
@@ -252,4 +227,3 @@ app.get('/calendar', async (req, res) =>
 // starting the server and keeping the connection open to listen for more requests
 module.exports = app.listen(3000);
 console.log('Server is listening on port 3000');
-
