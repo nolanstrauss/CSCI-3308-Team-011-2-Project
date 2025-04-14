@@ -158,10 +158,10 @@ app.post('/register', async (req, res) => {
     await db.none('INSERT INTO users (username, password) VALUES ($1, $2)', [username, hash]);
 
     // Option A: Send JSON success (e.g. for frontend AJAX)
-    return res.status(200).json({ message: "success" });
+    // return res.status(200).json({ message: "success" });
 
     // Option B: Or redirect for traditional form submission
-    // return res.redirect('/login');
+    return res.redirect('/login');
 
   } catch (err) {
     console.error(err);
