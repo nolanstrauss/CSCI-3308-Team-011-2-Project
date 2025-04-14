@@ -157,19 +157,21 @@ app.post('/register', async (req, res) => {
     const hash = await bcrypt.hash(password, 10);
     await db.none('INSERT INTO users (username, password) VALUES ($1, $2)', [username, hash]);
 
-    // Send a success message
+    // Option A: Send JSON success (e.g. for frontend AJAX)
     return res.status(200).json({ message: "success" });
 
-    // Redirect after sending JSON response would cause an error
-    // res.redirect('/login');  // Remove this line to avoid multiple responses
+    // Option B: Or redirect for traditional form submission
+    // return res.redirect('/login');
+
   } catch (err) {
     console.error(err);
-    res.status(500).render('pages/register', {
+    return res.status(500).render('pages/register', {
       error: true,
       message: 'An error occurred while registering. Please try again.',
     });
   }
 });
+
 
 
 
