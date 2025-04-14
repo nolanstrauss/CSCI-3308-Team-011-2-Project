@@ -56,6 +56,7 @@ describe('Testing Register API', () => {
       .post('/register') // Ensure this matches your actual registration route
       .send({ username: 'testuser', password: 'TestPassword123' }) // Valid input
       .end(async (err, res) => {
+        console.log(res.body.message);
         expect(res).to.have.status(200); // Expecting a 200 status for success
         expect(res.text).to.include('success'); // Adjust based on your API's success message
         await db.query('DELETE FROM users WHERE username = $1', ['testuser']);

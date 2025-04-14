@@ -107,74 +107,40 @@ app.get('/welcome', (req, res) => {
 
 
 //Login
-app.post('/login', async (req, res) => {
-
+// Register
+app.post('/register', async (req, res) => {
   const username = req.body.username;
-  var query = `SELECT username, password FROM users WHERE username = '${username}';`;
-  var redirectPath = '/calendar';
-  var currentUser = null;
-  try 
-  {
-    currentUser = await db.any(query);
-  } 
-  catch (err) 
-  {
-    res.redirect('/login');
-  };
+  const password = req.body.password;
 
-  if (currentUser.length == 0)
-  {
-    res.redirect('/register');
-  }
-  else
-  {
-    
-    const match = await bcrypt.compare(req.body.password, currentUser[0].password);
-    if (match)
-    {
-      req.session.currentUser = currentUser;
-      req.session.save();
-      res.redirect(redirectPath);
-    }
-    else
-    {
-      res.render('pages/login', {
+  try {
+    // Check if the username already exists
+    const userExists = await db.oneOrNone('SELECT username FROM users WHERE username = $1', [username]);
+
+    if (userExists) {
+      return res.status(400).render('pages/register', {
         error: true,
-        message: 'Username and Password do not match. Please try again.',
+        message: 'This username is already taken',
       });
     }
-  }
-  });
 
-    // Register
-    app.post('/register', async (req, res) => {
-      const username = req.body.username;
-      const password = req.body.password;
-    
-      try {
-        // Check if the username already exists
-        const userExists = await db.oneOrNone('SELECT username FROM users WHERE username = $1', [username]);
-    
-        if (userExists) {
-          return res.status(400).render('pages/register', {
-            error: true,
-            message: 'This username is already taken',
-          });
-        }
-    
-        // Hash the password and insert the new user
-        const hash = await bcrypt.hash(password, 10);
-        await db.none('INSERT INTO users (username, password) VALUES ($1, $2)', [username, hash]);
-    
-        res.redirect('/login');
-      } catch (err) {
-        console.error(err);
-        res.status(500).render('pages/register', {
-          error: true,
-          message: 'An error occurred while registering. Please try again.',
-        });
-      }
+    // Hash the password and insert the new user
+    const hash = await bcrypt.hash(password, 10);
+    await db.none('INSERT INTO users (username, password) VALUES ($1, $2)', [username, hash]);
+
+    // Send a success message
+    return res.status(200).json({ message: "success" });
+
+    // Redirect after sending JSON response would cause an error
+    // res.redirect('/login');  // Remove this line to avoid multiple responses
+  } catch (err) {
+    console.error(err);
+    res.status(500).render('pages/register', {
+      error: true,
+      message: 'An error occurred while registering. Please try again.',
     });
+  }
+});
+
 
 
 // Authentication middleware.
