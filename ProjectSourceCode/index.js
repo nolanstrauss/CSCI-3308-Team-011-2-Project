@@ -172,6 +172,7 @@ app.post('/register', async (req, res) => {
 });
 
 
+
 // Authentication middleware: redirects to /login if not authenticated
 const auth = (req, res, next) => {
   if (!req.session.currentUser) {
