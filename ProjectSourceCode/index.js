@@ -98,8 +98,12 @@ app.get('/login', (req, res) => {
 
 // Welcome route
 app.get('/welcome', (req, res) => {
-  res.render('pages/welcome', {});
+  res.status(200).json({
+    status: 'success',
+    message: 'Welcome!'
+  });
 });
+
 
 // Login route
 app.post('/login', async (req, res) => {
@@ -136,19 +140,40 @@ app.post('/login', async (req, res) => {
 // Register route
 app.post('/register', async (req, res) => {
   const username = req.body.username;
-  const plainPassword = req.body.password;
-  const hash = await bcrypt.hash(plainPassword, 10);
-  const query = `INSERT INTO users (username, password) VALUES ($1, $2);`;
-  let redirectPath = '/login';
+  const password = req.body.password;
 
   try {
-    await db.any(query, [username, hash]);
+    // Check if the username already exists
+    const userExists = await db.oneOrNone('SELECT username FROM users WHERE username = $1', [username]);
+
+    if (userExists) {
+      return res.status(400).render('pages/register', {
+        error: true,
+        message: 'This username is already taken',
+      });
+    }
+
+    // Hash the password and insert the new user
+    const hash = await bcrypt.hash(password, 10);
+    await db.none('INSERT INTO users (username, password) VALUES ($1, $2)', [username, hash]);
+
+    // Option A: Send JSON success (e.g. for frontend AJAX)
+    return res.status(200).json({ message: "success" });
+
+    // Option B: Or redirect for traditional form submission
+    // return res.redirect('/login');
+
   } catch (err) {
-    // If there's a DB error (like duplicate username), go back to register
-    redirectPath = '/register';
+    console.error(err);
+    return res.status(500).render('pages/register', {
+      error: true,
+      message: 'An error occurred while registering. Please try again.',
+    });
   }
-  res.redirect(redirectPath);
 });
+
+
+
 
 // Authentication middleware: redirects to /login if not authenticated
 const auth = (req, res, next) => {
