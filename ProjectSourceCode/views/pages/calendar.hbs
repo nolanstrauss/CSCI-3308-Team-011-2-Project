@@ -64,35 +64,42 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
               <div class="modal-body">
+                <div>
                   <form method="post" action="/calendar">
 
                     <p>Event Name</p>
-                    <input type="text" name="event_name"/>
+                    <input type="text" name="event_name" pattern=".{1+}" required/>
 
                     <p>Category</p>
                     <input type="text" name="event_category"/>
 
                     <p>Date</p>
-                    <input type="date" name="event_date">
-                  
+                    <input type="date" id="event_date_input" name="event_date" max="9999-12-31" required>
+
                     <p>Time</p>
-                    <input type="time" name="event_time">
+                    <input type="time" name="event_time" required>
+                    
+
+                    <p>How long before would you like to be notified (in mins)?</p>
+                    <input type="number" name="event_reminder_delay" min="0" required>
                     
                     <p>Description</p>
                     <textarea rows="5" cols="60" name="event_description"></textarea>
 
-                  <div class="modal-footer"> 
-                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                  <button class="btn btn-primary" type="submit">
-                    Create Event
-                  </button>
-                </div>
-              </form>
+                    <p>Link to Event</p>
+                    <input type="text" name="event_link">
+                    <div class="modal-footer"> 
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button class="btn btn-primary" type="submit">
+                      Create Event
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-  </body>
+    </body>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <script>
       // Generate a calendar for the specified year and month (0-based month index)
@@ -164,6 +171,7 @@
 
       // On page load, generate the calendar for the current month
       document.addEventListener("DOMContentLoaded", () => {
+
         const today = new Date();
         const thisYear = today.getFullYear();
         const thisMonth = today.getMonth(); // 0-based

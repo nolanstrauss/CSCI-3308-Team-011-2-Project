@@ -157,19 +157,19 @@ app.post('/register', async (req, res) => {
     const hash = await bcrypt.hash(password, 10);
     await db.none('INSERT INTO users (username, password) VALUES ($1, $2)', [username, hash]);
 
-    // Option A: Send JSON success (e.g. for frontend AJAX)
-    // return res.status(200).json({ message: "success" });
-
-    // Option B: Or redirect for traditional form submission
-    return res.redirect('/login');
-
-  } catch (err) {
-    console.error(err);
-    return res.status(500).render('pages/register', {
-      error: true,
-      message: 'An error occurred while registering. Please try again.',
-    });
-  }
+  //Insert username and hashed password into the 'users' table
+  var query = `INSERT INTO users (username, password) VALUES ('${req.body.username}','${hash}');`;
+  var redirectPath = '/login';
+  try 
+  {
+    let results = await db.any(query);
+    res.render(redirectPath,{});
+  } 
+  catch (err) 
+  {
+    redirectPath = '/register'
+    res.render(redirectPath,{error:true, message:"Error when logging in"});
+  };
 });
 
 
@@ -186,6 +186,21 @@ const auth = (req, res, next) => {
 // Protect routes: calendar, logout, edit-calendar, and manage-invitations
 app.use('/calendar', auth);
 app.use('/logout', auth);
+  
+app.get('/calendar', async (req, res) => 
+  {
+    const username = req.session.currentUser[0].username;
+    console.log(username);
+    var query = `SELECT eventName, eventCategory, eventDate, eventDescription FROM events WHERE eventUser = '${username}';`;
+    results = [];
+    try 
+    {
+      results = await db.any(query);
+      console.log("Successfully retrieved " +  results.length + " events");
+    } 
+    catch (err) 
+    {
+      console.log("Error occured in finding .");
 app.use('/edit-calendar', auth);
 app.use('/manage-invitations', auth);
 
@@ -201,18 +216,44 @@ app.get('/logout', (req, res) => {
   });
 });
 
-// Calendar page - must be logged in
-app.get('/calendar', async (req, res) => {
-  const username = req.session.currentUser[0].username;
-  var query = `SELECT eventName, eventCategory, eventDate, eventTime, eventDescription FROM events WHERE eventUser = '${username}';`;
-  let results = [];
+  app.post('/calendar', async (req, res) => 
+  {
+    const eventName = req.body.event_name;
+    const eventCategory = req.body.event_category;
+    const eventDate = req.body.event_date;
+    const eventTime = req.body.event_time;
+    const eventReminderDelay = req.body.event_reminder_delay;
+    const eventDesc = req.body.event_description;
+    const eventLink = req.body.event_link;
+    const username = req.session.currentUser[0].username;
 
-  try {
-    results = await db.any(query);
-    console.log("Successfully retrieved " + results.length + " events");
-  } catch (err) {
-    console.log("Error occured while retrieving events.");
-  }
+    console.log(eventName);
+    console.log(eventCategory);
+    console.log(eventDate);
+    console.log(eventTime);
+    console.log(eventReminderDelay);
+    console.log(eventDesc);
+    console.log(username);
+
+    let combinedDateTimeString = req.body.event_date + 'T' + req.body.event_time;
+    let combinedDate = new Date(combinedDateTimeString);
+    const sqlDateTime = combinedDate.toISOString().slice(0, 19).replace('T', ' ');
+    console.log(sqlDateTime);
+    
+    var query = `INSERT INTO events (eventName, eventCategory, eventDate, eventReminderDelay, eventDescription, eventLink, eventUser) VALUES ('${eventName}','${eventCategory}','${sqlDateTime}','${eventReminderDelay}','${eventDesc}','${eventLink}','${username}');`;
+    var redirectPath = '/login';
+    try 
+    {
+      let results = await db.any(query);
+      console.log("Successfully created event.");
+      
+      res.redirect('/calendar');
+    } 
+    catch (err) 
+    {
+      console.log("error in inserting event into table.");
+    };
+  });
 
   res.render('pages/calendar', { events: results });
 });
