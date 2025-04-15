@@ -13,6 +13,9 @@ const session = require('express-session'); // To set the session object. To sto
 const bcrypt = require('bcryptjs'); //  To hash passwords
 const axios = require('axios'); // To make HTTP requests from our server. We'll learn more about it in Part C.
 
+//custom modules
+let {createEvent} = require("./modules/email/email.js");
+
 // *****************************************************
 // <!-- Section 2 : Connect to DB -->
 // *****************************************************
