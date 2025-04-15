@@ -70,6 +70,17 @@ app.use(
   })
 );
 
+// middleware/guestOnly.js
+function guestOnly(req, res, next) {
+  if (req.session && req.session.user) {
+    // user is logged in, redirect to calendar
+    return res.redirect('/calendar');
+  }
+  next(); 
+}
+
+module.exports = guestOnly;
+
 // *****************************************************
 // <!-- Section 4 : API Routes -->
 // *****************************************************
@@ -87,12 +98,13 @@ app.get('/', (req, res) => {
 
 
 // Show the registration page with a flag (if needed)
-app.get('/register', (req, res) => {
+app.get('/register', guestOnly, (req, res) => {
   res.render('pages/register', { routeIsRegister: true });
 });
 
 // Show the login page and pass a flag so the navbar displays "Register" instead of "Login"
-app.get('/login', (req, res) => {
+//only allow to view the login page if the user is not logged in
+app.get('/login', guestOnly, (req, res) => {
   res.render('pages/login', { routeIsLogin: true });
 });
 
@@ -127,6 +139,7 @@ app.post('/login', async (req, res) => {
   if (match) {
     // Store the user as an array to be compatible with our locas usage (we take index 0 later)
     req.session.currentUser = currentUser;
+    req.session.user = true;
     req.session.save();
     res.redirect('/calendar');
   } else {
