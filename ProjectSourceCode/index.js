@@ -181,7 +181,7 @@ app.get('/logout', (req, res) => {
 // Calendar page - must be logged in
 app.get('/calendar', async (req, res) => {
   const username = req.session.currentUser[0].username;
-  // NOTE: We convert the DB's date to a string "YYYY-MM-DD" with TO_CHAR
+  
   const query = `
     SELECT
       eventID,
@@ -203,16 +203,16 @@ app.get('/calendar', async (req, res) => {
     console.log("Error occured while retrieving events.");
   }
 
-  // Send them to the calendar.hbs, which references "events"
+  
   res.render('pages/calendar', { events: results });
 });
 
-// Example protected route for editing the calendar
+
 app.get('/edit-calendar', (req, res) => {
   res.render('pages/edit-calendar');
 });
 
-// Example protected route for managing invitations
+
 app.get('/manage-invitations', (req, res) => {
   res.render('pages/manage-invitations');
 });
