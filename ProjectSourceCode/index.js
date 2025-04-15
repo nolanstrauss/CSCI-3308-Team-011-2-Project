@@ -83,7 +83,13 @@ app.use((req, res, next) => {
 
 // Redirect to /login by default
 app.get('/', (req, res) => {
-  res.redirect('/login');
+  if (req.session && req.session.user) {
+    // User is logged in
+    res.redirect('/calendar');
+  } else {
+    // User is not logged in
+    res.redirect('/login');
+  }
 });
 
 // Show the registration page with a flag (if needed)
