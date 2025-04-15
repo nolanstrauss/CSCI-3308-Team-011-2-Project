@@ -4,7 +4,7 @@ const nodemailer = require("nodemailer");
 const _ = require("lodash")
 
 // config env
-require("dotenv").config({path: "../../.env"});
+console.log(require("dotenv").config(/*{path: "ProjectSourceCode/.env"}*/))
 
 // import templates
 let {confirmation_email_template, reminder_email_template} = require("./templates")

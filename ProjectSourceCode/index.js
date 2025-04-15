@@ -245,6 +245,8 @@ app.get('/calendar', async (req, res) =>
     {
       let results = await db.any(query);
       console.log("Successfully created event.");
+
+      //add this to the mailing list: issue! no email specified in this list
       
       res.redirect('/calendar');
     } 
