@@ -1,12 +1,11 @@
 <header>
- <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
+ <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
    <div class="container">
 
      <!-- Website Name -->
-     <a class="navbar-brand fw-bold" href="/">
-       TimeBridge Calendar
-     </a>
-
+     <a class="navbar-brand fw-bold" href="{{#if user}}/calendar{{else}}/login{{/if}}">
+  TimeBridge Calendar
+</a>
 
      <!-- Toggler for Mobile View -->
      <button
@@ -20,28 +19,24 @@
        <span class="navbar-toggler-icon"></span>
      </button>
 
-
      <!-- Navigation Links -->
      <div class="collapse navbar-collapse" id="navbar-collapse">
        <ul class="navbar-nav me-auto">
-      <!-- View Calendar -->
+         <!-- View Calendar -->
          <li class="nav-item">
            <a class="nav-link" href="/calendar">View Calendar</a>
          </li>
-
 
          <!-- Edit Calendar -->
          <li class="nav-item">
            <a class="nav-link" href="/edit-calendar">Edit Calendar</a>
          </li>
 
-
          <!-- Manage Invitations -->
          <li class="nav-item">
            <a class="nav-link" href="/manage-invitations">Manage Invitations</a>
          </li>
        </ul>
-
 
        <!-- Right-Side Navigation -->
        <ul class="navbar-nav ms-auto">
@@ -59,9 +54,9 @@
                Welcome, {{user.username}}
              </a>
              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-               <li><a class="dropdown-item" href="/profile">Profile</a></li> <!-- to be completed -->
-               <li><a class="dropdown-item" href="/settings">Settings</a></li> <!-- to be completed -->
-               <li><a class="dropdown-item" href="/inivtations">Invitations</a></li> <!-- to be completed -->
+               <li><a class="dropdown-item" href="/profile">Profile</a></li>
+               <li><a class="dropdown-item" href="/settings">Settings</a></li>
+               <li><a class="dropdown-item" href="/inivtations">Invitations</a></li>
                <li><hr class="dropdown-divider"></li>
                <li><a class="dropdown-item text-danger" href="/logout">Logout</a></li>
              </ul>
@@ -69,10 +64,9 @@
          {{else}}
            <!-- Login Button -->
            <li class="nav-item">
-             <a class="nav-link btn btn-outline-primary px-3" href="/login">Login</a>
+             <a class="nav-link btn btn-outline-light px-3" href="/login">Login</a>
            </li>
          {{/if}}
-
        </ul>
      </div>
    </div>
