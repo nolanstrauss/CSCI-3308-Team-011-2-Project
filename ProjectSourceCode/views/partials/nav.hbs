@@ -1,10 +1,15 @@
 <header>
-  <nav class="navbar navbar-expand-sm border-bottom">
+  <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
     <div class="container">
-      <!-- Replace "timebridge" with any name or logo you prefer -->
-      <a class="navbar-brand" href="/">timebridge</a>
+
+      <!-- Website Name -->
+      <a class="navbar-brand fw-bold" href="/">
+        TimeBridge Calendar
+      </a>
+
+      <!-- Toggler for Mobile View -->
       <button
-        class="navbar-toggler ms-auto"
+        class="navbar-toggler"
         type="button"
         data-bs-toggle="collapse"
         data-bs-target="#navbar-collapse"
@@ -14,45 +19,55 @@
         <span class="navbar-toggler-icon"></span>
       </button>
 
+      <!-- Navigation Links -->
       <div class="collapse navbar-collapse" id="navbar-collapse">
         <ul class="navbar-nav me-auto">
-          <li class="nav-item custom-box">
-            <!-- Link directs to /calendar if logged in, or the home page otherwise -->
-            <a class="nav-link" href="{{#if user}}/calendar{{else}}/{{/if}}">View Calendar</a>
+          <!-- View Calendar -->
+          <li class="nav-item">
+            <a class="nav-link" href="/calendar">View Calendar</a>
+          </li>
+          <!-- Edit Calendar -->
+          <li class="nav-item">
+            <a class="nav-link" href="/edit-calendar">Edit Calendar</a>
+          </li>
+          <!-- Manage Invitations -->
+          <li class="nav-item">
+            <a class="nav-link" href="/manage-invitations">Manage Invitations</a>
           </li>
         </ul>
-        <div class="d-flex">
+
+        <!-- Right-Side Navigation -->
+        <ul class="navbar-nav ms-auto">
+          <!-- User-Specific Links -->
           {{#if user}}
-            <div class="nav-item me-1">
-              <a class="nav-link" href="/logout">Logout</a>
-            </div>
+            <!-- Dropdown for User Actions -->
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+                 data-bs-toggle="dropdown" aria-expanded="false">
+                Welcome, {{user.username}}
+              </a>
+              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                <li><a class="dropdown-item" href="/profile">Profile</a></li>
+                <li><a class="dropdown-item" href="/settings">Settings</a></li>
+                <li><a class="dropdown-item" href="/invitations">Invitations</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item text-danger" href="/logout">Logout</a></li>
+              </ul>
+            </li>
           {{else}}
-            <!-- Custom styled boxes for Login and Register -->
-            <div class="nav-item me-1 custom-box">
-              <a class="nav-link" href="/login">Login</a>
-            </div>
-            <div class="nav-item me-1 custom-box">
-              <a class="nav-link" href="/register">Register</a>
-            </div>
+            {{!-- When no user is logged in, display a different option based on route flag --}}
+            {{#if routeIsLogin}}
+              <li class="nav-item">
+                <a class="nav-link btn btn-outline-primary px-3" href="/register">Register</a>
+              </li>
+            {{else}}
+              <li class="nav-item">
+                <a class="nav-link btn btn-outline-primary px-3" href="/login">Login</a>
+              </li>
+            {{/if}}
           {{/if}}
-        </div>
+        </ul>
       </div>
     </div>
   </nav>
 </header>
-
-<style>
-  /* Custom styling for nav items with boxes */
-  .custom-box {
-    border: 1px solid #ccc;
-    padding: 5px 10px;
-    border-radius: 5px;
-    display: inline-flex;
-    align-items: center;
-    min-height: 40px; /* Adjust this value as needed to match your design */
-  }
-
-  .custom-box .nav-link {
-    margin: 0;
-  }
-</style>
