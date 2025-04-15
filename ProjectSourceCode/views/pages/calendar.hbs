@@ -31,33 +31,34 @@
       .empty {
         background: #fafafa;
       }
-      /* The day number at the top of each cell */
       .dayNumber {
         font-weight: bold;
         margin-top: 4px;
       }
-      /* Container for stacking all events below the day number */
       .eventsContainer {
         margin-top: 5px;
       }
-      /* Each clickable event block */
       .eventBlock {
-        display: block; /* stack each on its own line */
+        display: block;
         margin-top: 4px;
         padding: 2px 4px;
         border-radius: 4px;
         font-size: 0.9rem;
         cursor: pointer;
-        text-align: left; /* so text doesn't center in the block */
+        text-align: left;
       }
       .navButtons {
         text-align: center;
         margin-bottom: 1rem;
       }
+      /* Align the two buttons side-by-side with a small gap */
+      .buttonsRow {
+        display: flex;
+        gap: 10px;
+      }
     </style>
   </head>
   <body>
-    <!-- Month navigation buttons -->
     <div class="navButtons">
       <button id="prevMonth" class="btn btn-secondary">Previous Month</button>
       <button id="nextMonth" class="btn btn-secondary">Next Month</button>
@@ -67,12 +68,25 @@
     <div id="calendarContainer">
       <table id="calendarTable"></table>
 
+      <!-- Buttons placed in a .buttonsRow container so they appear side by side -->
       <div class="row">
         <div class="col-2">
-          <div class="custom-container">
-            <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#createModal">
+          <div class="custom-container buttonsRow">
+            <button
+              class="btn btn-primary mt-3"
+              data-bs-toggle="modal"
+              data-bs-target="#createModal"
+            >
               Create Event
             </button>
+
+            <!-- ICS download link, to the right of Create Event -->
+            <a
+              href="/calendar/ics"
+              class="btn btn-success mt-3"
+            >
+              Download ICS
+            </a>
           </div>
         </div>
       </div>
@@ -113,7 +127,9 @@
                 </select>
 
                 <div class="modal-footer">
-                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Close
+                  </button>
                   <button class="btn btn-primary" type="submit">Create Event</button>
                 </div>
               </form>
@@ -131,43 +147,36 @@
               <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-              <!-- Edit form -->
               <form id="editForm" method="post" action="/calendar/edit">
                 <input type="hidden" name="eventID" id="editEventID" />
-
                 <p>Event Name</p>
                 <input type="text" name="event_name" id="editName" required />
-
                 <p>Category</p>
                 <input type="text" name="event_category" id="editCategory" />
-
                 <p>Date</p>
                 <input type="date" name="event_date" id="editDate" required />
-
                 <p>Time</p>
                 <input type="time" name="event_time" id="editTime" required />
-
                 <p>Description</p>
                 <textarea rows="5" cols="60" name="event_description" id="editDescription"></textarea>
-
                 <p>Event Color</p>
                 <input type="color" name="event_color" id="editColor" />
               </form>
             </div>
             <div class="modal-footer">
               <button id="deleteBtn" class="btn btn-danger">Delete</button>
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                Close
+              </button>
               <button id="saveBtn" class="btn btn-primary">Save</button>
             </div>
           </div>
         </div>
       </div>
-
-      <br />
-      <a href="/calendar/ics" class="btn btn-success">Download ICS</a>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
     <script>
       const serverEvents = {{{json events}}};
 
@@ -210,7 +219,7 @@
         let startDay = firstDay.getDay();
         let currentRow = document.createElement("tr");
 
-        // Empty cells before day1
+        // Empty cells before day 1
         for (let i = 0; i < startDay; i++) {
           let emptyCell = document.createElement("td");
           emptyCell.className = "empty";
@@ -225,13 +234,11 @@
           }
 
           let cell = document.createElement("td");
-          // Day number at top
           const dayNumber = document.createElement("div");
           dayNumber.className = "dayNumber";
           dayNumber.textContent = date;
           cell.appendChild(dayNumber);
 
-          // Container for events
           const eventsContainer = document.createElement("div");
           eventsContainer.className = "eventsContainer";
           cell.appendChild(eventsContainer);
@@ -247,7 +254,6 @@
               eventDiv.style.backgroundColor = ev.eventcolor || "#ffe8a1";
               eventDiv.textContent = ev.eventname || "Untitled Event";
 
-              // Attach data for the view/edit/delete modal
               eventDiv.dataset.eventid = ev.eventid;
               eventDiv.dataset.eventname = ev.eventname;
               eventDiv.dataset.eventcategory = ev.eventcategory || "";
@@ -285,12 +291,10 @@
         calendarTable.appendChild(currentRow);
       }
 
-      // On page load, show the current month
       document.addEventListener("DOMContentLoaded", () => {
         generateCalendar(currentYear, currentMonth);
       });
 
-      // Navigation Buttons
       document.getElementById("prevMonth").addEventListener("click", () => {
         currentMonth--;
         if (currentMonth < 0) {
@@ -325,6 +329,7 @@
           .then(() => window.location.reload())
           .catch(() => alert("Delete failed"));
       });
+      
     </script>
   </body>
 </html>
