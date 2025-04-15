@@ -98,9 +98,8 @@ app.get('/login', (req, res) => {
 
 // Welcome route
 app.get('/welcome', (req, res) => {
-  res.status(200).json({
-    status: 'success',
-    message: 'Welcome!'
+  res.status(200).render('pages/welcome', {
+    message: 'success'
   });
 });
 
