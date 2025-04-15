@@ -38,9 +38,13 @@
   <h1>Welcome to Our Application!</h1>
   <p>We're glad to have you here.</p>
   <div>
-    <a href="/login">Login</a>
-    <a href="/register">Register</a>
-    <a href="/calendar">View Calendar</a>
+    {{#if user}}
+      <a href="/calendar">View Calendar</a>
+    {{else}}
+      <a href="/login">Login</a>
+      <a href="/register">Register</a>
+      <a href="/calendar">View Calendar</a>
+    {{/if}}
   </div>
 </body>
 </html>
