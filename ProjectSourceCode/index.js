@@ -83,7 +83,7 @@ app.use((req, res, next) => {
 
 // Redirect to /login by default
 app.get('/', (req, res) => {
-  res.redirect('/login');
+  res.redirect('/welcome');
 });
 
 // Show the registration page with a flag (if needed)
@@ -98,10 +98,7 @@ app.get('/login', (req, res) => {
 
 // Welcome route
 app.get('/welcome', (req, res) => {
-  res.status(200).json({
-    status: 'success',
-    message: 'Welcome!'
-  });
+  res.render('pages/welcome', {});
 });
 
 
@@ -142,10 +139,15 @@ app.post('/register', async (req, res) => {
   const username = req.body.username;
   const password = req.body.password;
 
-  try {
     // Check if the username already exists
-    const userExists = await db.oneOrNone('SELECT username FROM users WHERE username = $1', [username]);
-
+    try
+    {
+      const userExists = await db.oneOrNone('SELECT username FROM users WHERE username = $1', [username]);
+    }
+    catch (err)
+    {
+      console.log("Could not connect to database");
+    }
     if (userExists) {
       return res.status(400).render('pages/register', {
         error: true,
@@ -169,7 +171,7 @@ app.post('/register', async (req, res) => {
   {
     redirectPath = '/register'
     res.render(redirectPath,{error:true, message:"Error when logging in"});
-  };
+  }
 });
 
 
@@ -201,8 +203,11 @@ app.get('/calendar', async (req, res) =>
     catch (err) 
     {
       console.log("Error occured in finding .");
-app.use('/edit-calendar', auth);
-app.use('/manage-invitations', auth);
+      app.use('/edit-calendar', auth);
+      app.use('/manage-invitations', auth);
+    }
+    res.render('pages/calendar', { events: results });
+  });
 
 // Logout route: destroys the session, clears cookie, and explicitly sets user to null so the navbar displays "Login/Register"
 app.get('/logout', (req, res) => {
@@ -253,7 +258,6 @@ app.get('/logout', (req, res) => {
     {
       console.log("error in inserting event into table.");
     };
-  });
 
   res.render('pages/calendar', { events: results });
 });
