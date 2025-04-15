@@ -139,41 +139,29 @@ app.post('/register', async (req, res) => {
   const username = req.body.username;
   const password = req.body.password;
 
-    // Check if the username already exists
-    try
-    {
-      const userExists = await db.oneOrNone('SELECT username FROM users WHERE username = $1', [username]);
-    }
-    catch (err)
-    {
-      console.log("Could not connect to database");
-    }
-    if (userExists) {
-      return res.status(400).render('pages/register', {
-        error: true,
-        message: 'This username is already taken',
-      });
-    }
+  // Check if the username already exists
+  let userExists;
+  try {
+    userExists = await db.oneOrNone('SELECT username FROM users WHERE username = $1', [username]);
+  } catch (err) {
+    console.log("Could not connect to database");
+  }
+  if (userExists) {
+    return res.status(400).render('pages/register', {
+      error: true,
+      message: 'This username is already taken',
+    });
+  }
 
-    // Hash the password and insert the new user
-    const hash = await bcrypt.hash(password, 10);
+  // Hash the password and insert the new user
+  const hash = await bcrypt.hash(password, 10);
+  try {
     await db.none('INSERT INTO users (username, password) VALUES ($1, $2)', [username, hash]);
-
-  //Insert username and hashed password into the 'users' table
-  var query = `INSERT INTO users (username, password) VALUES ('${req.body.username}','${hash}');`;
-  var redirectPath = '/login';
-  try 
-  {
-    let results = await db.any(query);
-    res.render(redirectPath,{});
-  } 
-  catch (err) 
-  {
-    redirectPath = '/register'
-    res.render(redirectPath,{error:true, message:"Error when logging in"});
+    res.redirect('/login');
+  } catch (err) {
+    res.render('pages/register', { error: true, message: "Error registering user" });
   }
 });
-
 
 
 
