@@ -111,9 +111,7 @@ app.get('/login', guestOnly, (req, res) => {
 // Welcome route
 app.get('/welcome', (req, res) => {
 
-  res.status(200).render('pages/welcome', {
-    message: 'success'
-  });
+  res.status(200).render('pages/welcome');
 
 });
 
