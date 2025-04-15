@@ -74,6 +74,9 @@
           Event Name  
         </td>
         <td>
+          Event Date  
+        </td>
+        <td>
           Event Time  
         </td>
         <td>
@@ -93,7 +96,10 @@
             {{this.eventname}}
           </td>
           <td>
-            {{this.eventdate}}
+            {{date this.eventdate}}
+          </td>
+          <td>
+            {{time this.eventdate}}
           </td>
           <td>
             {{this.eventdescription}}

@@ -28,6 +28,30 @@ Handlebars.registerHelper("inc", function(value, options)
 {
     return parseInt(value) + 1;
 });
+Handlebars.registerHelper("date", function(value, options)
+{
+  dateTime = value.split(' ');
+  dateTime = dateTime[0].split('-');
+  return dateTime[2] + "/" + dateTime[1] + "/" + dateTime[0];
+});
+Handlebars.registerHelper("time", function(value, options)
+{
+  dateTime = value.split(' ');
+  time = dateTime[1].split(':');
+  amPm = 'AM';
+  t = parseInt(time[0]);
+  if (t > 12)
+  {
+    t -= 12;
+    amPm = 'PM';
+  }
+  if (t == 0)
+  {
+    t = 12;
+    amPM = 'PM';
+  }
+  return t + ':' + time[1] + amPm;
+});
 
 // database configuration
 const dbConfig = {
@@ -198,7 +222,7 @@ app.get('/calendar', async (req, res) =>
   {
     const username = req.session.currentUser[0].username;
     console.log(username);
-    var query = `SELECT eventName, eventCategory, eventDate, eventDescription, eventUser FROM events WHERE eventUser = '${username}';`;
+    var query = `SELECT eventName, eventCategory, eventDate, eventDescription, eventID FROM events WHERE eventUser = '${username}' ORDER BY eventDate;`;
     results = [];
     try 
     {
@@ -268,6 +292,26 @@ app.get('/logout', (req, res) => {
 
   res.render('pages/calendar', { events: results });
 });
+
+app.post('/calendar/delete', async (req, res) => 
+  {
+    const eventID = req.body.event_id;
+
+    console.log("Deleting event " + eventID);
+    
+    var query = `DELETE FROM events WHERE eventID = '${eventID}';`;
+    try 
+    {
+      let results = await db.any(query);
+      console.log("Successfully deleted event.");
+    } 
+    catch (err) 
+    {
+      console.log("error in deleting event from table.");
+    };
+    res.redirect('/calendar');
+});
+
 
 // Example protected route for editing the calendar
 app.get('/edit-calendar', (req, res) => {
