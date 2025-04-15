@@ -95,7 +95,7 @@ app.use((req, res, next) => {
 // Redirect to /login by default
 app.get('/', (req, res) => {
   res.redirect('/welcome');
-
+});
 
 // Show the registration page with a flag (if needed)
 app.get('/register', guestOnly, (req, res) => {
@@ -115,7 +115,7 @@ app.get('/welcome', (req, res) => {
     message: 'success'
   });
 
-
+});
 
 // Login route
 app.post('/login', async (req, res) => {
