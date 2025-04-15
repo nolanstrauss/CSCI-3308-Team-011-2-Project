@@ -41,7 +41,7 @@
     </style>
   </head>
   <body>
-    <h1 id="calendarTitle">Loading Calendar...</h1>
+    <h1 id="calendarTitle"></h1>
     <div id="calendarContainer">
       <table id="calendarTable">
         <!-- Calendar will be built dynamically with JS -->
@@ -72,7 +72,7 @@
       </div>
     </div>
 
-    <!-- Create Event Modal (existing code) -->
+    <!-- Create Event Modal -->
     <div class="modal" tabindex="-1" id="event_modal">
       <div class="modal-dialog">
         <div class="modal-content">
@@ -81,16 +81,16 @@
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-            <form method="post" action="/calendar">
+            <form id="createEventForm">
               <p>Event Name</p>
-              <input type="text" name="event_name" pattern=".{1,}" required/>
+              <input type="text" name="event_name" pattern=".{1,}" required />
               <p>Category</p>
-              <input type="text" name="event_category"/>
+              <input type="text" name="event_category" />
               <p>Date</p>
-              <input type="date" id="event_date_input" name="event_date" max="9999-12-31" required>
+              <input type="date" name="event_date" max="9999-12-31" required>
               <p>Time</p>
               <input type="time" name="event_time" required>
-              <p>How long before would you like to be notified (in mins)?</p>
+              <p>Reminder (in mins)</p>
               <input type="number" name="event_reminder_delay" min="0" required>
               <p>Description</p>
               <textarea rows="5" cols="60" name="event_description"></textarea>
@@ -140,31 +140,25 @@
       </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" 
+      integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" 
+      crossorigin="anonymous">
+    </script>
     <script>
-      // Assume this is populated from the server via JSON (or via an API call)
-      const eventsData = typeof events !== "undefined" ? events : [
-        { id: 1, eventName: "Meeting", eventCategory: "Work", eventDate: "2025-04-20", eventTime: "10:00", eventDescription: "Discuss project", eventLink: "http://example.com" },
-        { id: 2, eventName: "Conference", eventCategory: "Work", eventDate: "2025-04-22", eventTime: "14:00", eventDescription: "Tech conference", eventLink: "http://example.com" }
-      ];
+      let eventsData = [];
 
-      // Generate the calendar for the specified year and month (0-based month index)
       function generateCalendar(year, month) {
         const monthNames = [
           "January", "February", "March", "April", "May", "June",
           "July", "August", "September", "October", "November", "December"
         ];
-
         const firstDay = new Date(year, month, 1);
         const daysInMonth = new Date(year, month + 1, 0).getDate();
-
         const calendarTitle = document.getElementById("calendarTitle");
         calendarTitle.textContent = `${monthNames[month]} ${year}`;
-
         const calendarTable = document.getElementById("calendarTable");
         calendarTable.innerHTML = "";
 
-        // Create header row for day names
         const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
         let headerRow = document.createElement("tr");
         dayNames.forEach(day => {
@@ -174,7 +168,6 @@
         });
         calendarTable.appendChild(headerRow);
 
-        // Fill in empty cells before day 1
         let startDay = firstDay.getDay();
         let currentRow = document.createElement("tr");
         for (let i = 0; i < startDay; i++) {
@@ -183,7 +176,6 @@
           currentRow.appendChild(emptyCell);
         }
 
-        // Add cells for each day of the month
         for (let date = 1; date <= daysInMonth; date++) {
           if ((startDay + date - 1) % 7 === 0 && date > 1) {
             calendarTable.appendChild(currentRow);
@@ -194,8 +186,6 @@
           cell.innerHTML = date;
           currentRow.appendChild(cell);
         }
-
-        // Complete the last row with empty cells if needed
         let remainingCells = 7 - currentRow.children.length;
         for (let i = 0; i < remainingCells; i++) {
           const emptyCell = document.createElement("td");
@@ -204,7 +194,6 @@
         }
         calendarTable.appendChild(currentRow);
 
-        // Add event buttons to the respective day cell
         eventsData.forEach(event => {
           let eventDateObj = new Date(event.eventDate);
           if (eventDateObj.getFullYear() === year && eventDateObj.getMonth() === month) {
@@ -221,14 +210,40 @@
         });
       }
 
-      // Populate Manage Events Modal table
+      document.addEventListener("DOMContentLoaded", () => {
+        const today = new Date();
+        generateCalendar(today.getFullYear(), today.getMonth());
+
+        const createEventForm = document.getElementById("createEventForm");
+        createEventForm.addEventListener("submit", function(e) {
+          e.preventDefault();
+          const formData = new FormData(createEventForm);
+          const newEvent = {
+            id: Date.now(),
+            eventName: formData.get("event_name"),
+            eventCategory: formData.get("event_category"),
+            eventDate: formData.get("event_date"),
+            eventTime: formData.get("event_time"),
+            eventReminderDelay: formData.get("event_reminder_delay"),
+            eventDescription: formData.get("event_description"),
+            eventLink: formData.get("event_link")
+          };
+          eventsData.push(newEvent);
+          const current = new Date(newEvent.eventDate);
+          generateCalendar(current.getFullYear(), current.getMonth());
+          createEventForm.reset();
+          const eventModalEl = document.getElementById("event_modal");
+          const modal = bootstrap.Modal.getInstance(eventModalEl);
+          modal.hide();
+        });
+      });
+
       function populateManageEventsTable() {
         const tableBody = document.querySelector("#manageEventsTable tbody");
         tableBody.innerHTML = "";
         eventsData.forEach(event => {
           const row = document.createElement("tr");
 
-          // Create cells with editable inputs
           const nameCell = document.createElement("td");
           const nameInput = document.createElement("input");
           nameInput.type = "text";
@@ -278,52 +293,57 @@
           linkCell.appendChild(linkInput);
           row.appendChild(linkCell);
 
-          // Actions cell (if additional actions are needed)
           const actionCell = document.createElement("td");
-          // For example, add a temporary "Delete" button if needed
           const deleteBtn = document.createElement("button");
           deleteBtn.textContent = "Delete";
           deleteBtn.className = "btn btn-danger btn-sm";
           deleteBtn.onclick = function() {
-            // Remove the event from eventsData array (simulated removal)
             const index = eventsData.findIndex(e => e.id === event.id);
-            if(index > -1) {
+            if (index > -1) {
               eventsData.splice(index, 1);
               populateManageEventsTable();
+              const today = new Date();
+              generateCalendar(today.getFullYear(), today.getMonth());
             }
           };
           actionCell.appendChild(deleteBtn);
           row.appendChild(actionCell);
-
           tableBody.appendChild(row);
         });
       }
 
-      // Save changes from Manage Events Modal
-      document.getElementById("saveEventsButton").addEventListener("click", function() {
-        // Ideally, you would gather the updated data and send an AJAX request to update the server.
-        // Here we'll simply log the updated eventsData array.
-        // You may want to re-populate eventsData from the table inputs here.
-        console.log("Updated events:", eventsData);
-        // Close the modal after saving if desired.
-        const manageEventsModalEl = document.getElementById("manage_events_modal");
-        const modalInstance = bootstrap.Modal.getInstance(manageEventsModalEl);
-        modalInstance.hide();
+  document.getElementById("saveEventsButton").addEventListener("click", function() {
+    const tableBody = document.querySelector("#manageEventsTable tbody");
+    const rows = tableBody.getElementsByTagName("tr");
+    // Loop through all rows in the table body
+    for (let row of rows) {
+      const inputs = row.querySelectorAll("input");
+      if (inputs.length >= 6) {
+        // Obtain the event id stored in the first input's dataset
+        const eventId = inputs[0].dataset.eventId;
+        // Find the matching event in eventsData
+        const event = eventsData.find(e => e.id == eventId);
+        if (event) {
+          event.eventName = inputs[0].value;
+          event.eventCategory = inputs[1].value;
+          event.eventDate = inputs[2].value;
+          event.eventTime = inputs[3].value;
+          event.eventDescription = inputs[4].value;
+          event.eventLink = inputs[5].value;
+        }
+      }
+    }
+    console.log("Updated events:", eventsData);
+    // Hide modal and regenerate calendar
+    const manageEventsModalEl = document.getElementById("manage_events_modal");
+    const modalInstance = bootstrap.Modal.getInstance(manageEventsModalEl);
+    modalInstance.hide();
+    const today = new Date();
+    generateCalendar(today.getFullYear(), today.getMonth());
+  });
 
-        // Optionally, regenerate the calendar to reflect changes.
-        const today = new Date();
-        generateCalendar(today.getFullYear(), today.getMonth());
-      });
-
-      // When the Manage Events modal is shown, populate the table
-      const manageEventsModal = document.getElementById("manage_events_modal");
-      manageEventsModal.addEventListener("show.bs.modal", populateManageEventsTable);
-
-      // Generate calendar on page load
-      document.addEventListener("DOMContentLoaded", () => {
-        const today = new Date();
-        generateCalendar(today.getFullYear(), today.getMonth());
-      });
+  const manageEventsModal = document.getElementById("manage_events_modal");
+  manageEventsModal.addEventListener("show.bs.modal", populateManageEventsTable);
     </script>
   </body>
 </html>
