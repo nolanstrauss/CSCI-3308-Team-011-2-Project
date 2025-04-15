@@ -24,6 +24,11 @@ const hbs = handlebars.create({
   partialsDir: __dirname + '/views/partials',
 });
 
+Handlebars.registerHelper("inc", function(value, options)
+{
+    return parseInt(value) + 1;
+});
+
 // database configuration
 const dbConfig = {
   host: 'db', // the database server
@@ -193,20 +198,22 @@ app.get('/calendar', async (req, res) =>
   {
     const username = req.session.currentUser[0].username;
     console.log(username);
-    var query = `SELECT eventName, eventCategory, eventDate, eventDescription FROM events WHERE eventUser = '${username}';`;
+    var query = `SELECT eventName, eventCategory, eventDate, eventDescription, eventUser FROM events WHERE eventUser = '${username}';`;
     results = [];
     try 
     {
       results = await db.any(query);
       console.log("Successfully retrieved " +  results.length + " events");
+      console.log(results);
+      res.render('pages/calendar', { events: results });
     } 
     catch (err) 
     {
       console.log("Error occured in finding .");
       app.use('/edit-calendar', auth);
       app.use('/manage-invitations', auth);
+      res.render('pages/calendar', {});
     }
-    res.render('pages/calendar', { events: results });
   });
 
 // Logout route: destroys the session, clears cookie, and explicitly sets user to null so the navbar displays "Login/Register"

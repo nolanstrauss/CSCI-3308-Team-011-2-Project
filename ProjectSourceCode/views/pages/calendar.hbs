@@ -3,7 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <title>Big Calendar</title>
-    <style>
+  </head>
+  <body>
+    <h1 id="calendarTitle">Loading Calendar...</h1>
+    <div id="calendarContainer">
+      <style>
       /* Simple styling to make the calendar bigger and more readable */
       #calendarContainer {
         width: 80%;
@@ -35,11 +39,14 @@
       .empty {
         background: #fafafa;
       }
+      hr 
+      {
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+        border: 0;
+        border-top: 1px solid rgba(0, 0, 0, 0.1);
+      }
     </style>
-  </head>
-  <body>
-    <h1 id="calendarTitle">Loading Calendar...</h1>
-    <div id="calendarContainer">
       <table id="calendarTable">
         <!-- We’ll populate this table dynamically with JS. -->
       </table>
@@ -56,6 +63,43 @@
               </div>
           </div>
       </div>
+      <hr/>
+      <h3>Upcoming events: </h3>
+      <table>
+        <tr>
+        <td>
+          
+        </td>
+        <td>
+          Event Name  
+        </td>
+        <td>
+          Event Time  
+        </td>
+        <td>
+          Event Description  
+        </td>
+        </tr>
+
+        {{#each events}}
+        <tr>
+          <td>
+            {{inc @index}}
+          </td>
+          <td>
+            {{this.eventname}}
+          </td>
+          <td>
+            {{this.eventdate}}
+          </td>
+          <td>
+            {{this.eventdescription}}
+          </td>
+        {{/each}}
+      </table>
+
+
+
       <div class="modal" tabindex="-1" id="event_modal">
           <div class="modal-dialog">
             <div class="modal-content">
