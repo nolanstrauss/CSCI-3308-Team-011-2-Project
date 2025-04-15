@@ -155,15 +155,9 @@ app.post('/register', async (req, res) => {
   const username = req.body.username;
   const password = req.body.password;
 
+  try {
     // Check if the username already exists
-    try
-    {
-      const userExists = await db.oneOrNone('SELECT username FROM users WHERE username = $1', [username]);
-    }
-    catch (err)
-    {
-      console.log("Could not connect to database");
-    }
+    const userExists = await db.oneOrNone('SELECT username FROM users WHERE username = $1', [username]);
     if (userExists) {
       return res.status(400).render('pages/register', {
         error: true,
@@ -175,18 +169,14 @@ app.post('/register', async (req, res) => {
     const hash = await bcrypt.hash(password, 10);
     await db.none('INSERT INTO users (username, password) VALUES ($1, $2)', [username, hash]);
 
-  //Insert username and hashed password into the 'users' table
-  var query = `INSERT INTO users (username, password) VALUES ('${req.body.username}','${hash}');`;
-  var redirectPath = '/login';
-  try 
-  {
-    let results = await db.any(query);
-    res.render(redirectPath,{});
-  } 
-  catch (err) 
-  {
-    redirectPath = '/register'
-    res.render(redirectPath,{error:true, message:"Error when logging in"});
+    // Redirect to login after successful registration
+    res.redirect('/login');
+  } catch (err) {
+    console.error("Error during registration:", err);
+    res.status(500).render('pages/register', {
+      error: true,
+      message: 'An error occurred during registration. Please try again.',
+    });
   }
 });
 
