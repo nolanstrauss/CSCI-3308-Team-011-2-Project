@@ -4,36 +4,39 @@
     <meta charset="UTF-8" />
     <title>Big Calendar</title>
     <style>
-      /* Simple styling to make the calendar bigger and more readable */
+      /* Calendar styles */
       #calendarContainer {
         width: 80%;
         margin: 0 auto;
         margin-top: 2rem;
       }
-
       #calendarTitle {
         text-align: center;
       }
-
       table {
         width: 100%;
         border-collapse: collapse;
         font-family: Arial, sans-serif;
         font-size: 1.1rem;
       }
-
       th, td {
         border: 1px solid #ccc;
         text-align: center;
         height: 3rem;
+        vertical-align: top;
       }
-
       th {
         background: #f2f2f2;
       }
-
       .empty {
         background: #fafafa;
+      }
+      .event-btn {
+        background-color: lightblue;
+        border: none;
+        padding: 2px 5px;
+        margin-top: 5px;
+        cursor: pointer;
       }
     </style>
   </head>
@@ -41,141 +44,286 @@
     <h1 id="calendarTitle">Loading Calendar...</h1>
     <div id="calendarContainer">
       <table id="calendarTable">
-        <!-- We’ll populate this table dynamically with JS. -->
+        <!-- Calendar will be built dynamically with JS -->
       </table>
-      <div class="row">
-          <div class="col-2">
-              <div class="custom-container">
-                <button
-                  class="btn btn-primary mt-3"
-                  data-bs-toggle="modal"
-                  data-bs-target="#event_modal" 
-                >
-                  Create Event
-                </button>
-              </div>
-          </div>
-      </div>
-      <div class="modal" tabindex="-1" id="event_modal">
-          <div class="modal-dialog">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title">Create a new Event!</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-              </div>
-              <div class="modal-body">
-                <div>
-                  <form method="post" action="/calendar">
-
-                    <p>Event Name</p>
-                    <input type="text" name="event_name" pattern=".{1+}" required/>
-
-                    <p>Category</p>
-                    <input type="text" name="event_category"/>
-
-                    <p>Date</p>
-                    <input type="date" id="event_date_input" name="event_date" max="9999-12-31" required>
-
-                    <p>Time</p>
-                    <input type="time" name="event_time" required>
-                    
-
-                    <p>How long before would you like to be notified (in mins)?</p>
-                    <input type="number" name="event_reminder_delay" min="0" required>
-                    
-                    <p>Description</p>
-                    <textarea rows="5" cols="60" name="event_description"></textarea>
-
-                    <p>Link to Event</p>
-                    <input type="text" name="event_link">
-                    <div class="modal-footer"> 
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button class="btn btn-primary" type="submit">
-                      Create Event
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
+      <div class="row" style="margin-top:1rem;">
+        <div class="col-2">
+          <div class="custom-container">
+            <button
+              class="btn btn-primary mt-3"
+              data-bs-toggle="modal"
+              data-bs-target="#event_modal"
+            >
+              Create Event
+            </button>
           </div>
         </div>
-    </body>
+        <div class="col-2">
+          <div class="custom-container">
+            <button
+              class="btn btn-secondary mt-3"
+              data-bs-toggle="modal"
+              data-bs-target="#manage_events_modal"
+            >
+              Manage Events
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Create Event Modal (existing code) -->
+    <div class="modal" tabindex="-1" id="event_modal">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Create a new Event!</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form method="post" action="/calendar">
+              <p>Event Name</p>
+              <input type="text" name="event_name" pattern=".{1,}" required/>
+              <p>Category</p>
+              <input type="text" name="event_category"/>
+              <p>Date</p>
+              <input type="date" id="event_date_input" name="event_date" max="9999-12-31" required>
+              <p>Time</p>
+              <input type="time" name="event_time" required>
+              <p>How long before would you like to be notified (in mins)?</p>
+              <input type="number" name="event_reminder_delay" min="0" required>
+              <p>Description</p>
+              <textarea rows="5" cols="60" name="event_description"></textarea>
+              <p>Link to Event</p>
+              <input type="text" name="event_link">
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button class="btn btn-primary" type="submit">Create Event</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Manage Events Modal -->
+    <div class="modal" tabindex="-1" id="manage_events_modal">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Manage Events</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <table class="table" id="manageEventsTable">
+              <thead>
+                <tr>
+                  <th>Event Name</th>
+                  <th>Category</th>
+                  <th>Date</th>
+                  <th>Time</th>
+                  <th>Description</th>
+                  <th>Link</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Rows will be populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+          <div class="modal-footer">
+            <button type="button" id="saveEventsButton" class="btn btn-primary">Save changes</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <script>
-      // Generate a calendar for the specified year and month (0-based month index)
+      // Assume this is populated from the server via JSON (or via an API call)
+      const eventsData = typeof events !== "undefined" ? events : [
+        { id: 1, eventName: "Meeting", eventCategory: "Work", eventDate: "2025-04-20", eventTime: "10:00", eventDescription: "Discuss project", eventLink: "http://example.com" },
+        { id: 2, eventName: "Conference", eventCategory: "Work", eventDate: "2025-04-22", eventTime: "14:00", eventDescription: "Tech conference", eventLink: "http://example.com" }
+      ];
+
+      // Generate the calendar for the specified year and month (0-based month index)
       function generateCalendar(year, month) {
         const monthNames = [
           "January", "February", "March", "April", "May", "June",
           "July", "August", "September", "October", "November", "December"
         ];
 
-        // Use a Date object to figure out the first day and number of days in the month
         const firstDay = new Date(year, month, 1);
-        const daysInMonth = new Date(year, month + 1, 0).getDate(); // e.g. Apr+1=May, day=0 => last day of Apr
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-        // Title
         const calendarTitle = document.getElementById("calendarTitle");
         calendarTitle.textContent = `${monthNames[month]} ${year}`;
 
-        // Table element
         const calendarTable = document.getElementById("calendarTable");
-        calendarTable.innerHTML = ""; // Clear any existing table rows
+        calendarTable.innerHTML = "";
 
-        // Row for day names
+        // Create header row for day names
         const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
         let headerRow = document.createElement("tr");
         dayNames.forEach(day => {
-          let th = document.createElement("th");
+          const th = document.createElement("th");
           th.textContent = day;
           headerRow.appendChild(th);
         });
         calendarTable.appendChild(headerRow);
 
-        // Determine the day of the week for the 1st of the month
-        let startDay = firstDay.getDay(); // 0=Sunday, 1=Monday, etc.
-
-        // We’ll build rows for each week
+        // Fill in empty cells before day 1
+        let startDay = firstDay.getDay();
         let currentRow = document.createElement("tr");
-
-        // Fill in empty cells before the first day of the month
         for (let i = 0; i < startDay; i++) {
-          let emptyCell = document.createElement("td");
+          const emptyCell = document.createElement("td");
           emptyCell.className = "empty";
           currentRow.appendChild(emptyCell);
         }
 
-        // Fill in cells for each date of the month
+        // Add cells for each day of the month
         for (let date = 1; date <= daysInMonth; date++) {
-          // If we’ve reached Sunday again (day 0) and it’s not the first row, start a new row
           if ((startDay + date - 1) % 7 === 0 && date > 1) {
             calendarTable.appendChild(currentRow);
             currentRow = document.createElement("tr");
           }
-          
-          let cell = document.createElement("td");
-          cell.textContent = date;
+          const cell = document.createElement("td");
+          cell.setAttribute("data-date", date);
+          cell.innerHTML = date;
           currentRow.appendChild(cell);
         }
 
-        // If the last row is not complete, fill the remaining cells with empty days
+        // Complete the last row with empty cells if needed
         let remainingCells = 7 - currentRow.children.length;
         for (let i = 0; i < remainingCells; i++) {
-          let emptyCell = document.createElement("td");
+          const emptyCell = document.createElement("td");
           emptyCell.className = "empty";
           currentRow.appendChild(emptyCell);
         }
-
-        // Append the last row
         calendarTable.appendChild(currentRow);
+
+        // Add event buttons to the respective day cell
+        eventsData.forEach(event => {
+          let eventDateObj = new Date(event.eventDate);
+          if (eventDateObj.getFullYear() === year && eventDateObj.getMonth() === month) {
+            const day = eventDateObj.getDate();
+            let cell = document.querySelector(`td[data-date='${day}']`);
+            if (cell) {
+              const btn = document.createElement("button");
+              btn.textContent = event.eventName;
+              btn.className = "event-btn";
+              cell.appendChild(document.createElement("br"));
+              cell.appendChild(btn);
+            }
+          }
+        });
       }
 
-      // On page load, generate the calendar for the current month
-      document.addEventListener("DOMContentLoaded", () => {
+      // Populate Manage Events Modal table
+      function populateManageEventsTable() {
+        const tableBody = document.querySelector("#manageEventsTable tbody");
+        tableBody.innerHTML = "";
+        eventsData.forEach(event => {
+          const row = document.createElement("tr");
 
+          // Create cells with editable inputs
+          const nameCell = document.createElement("td");
+          const nameInput = document.createElement("input");
+          nameInput.type = "text";
+          nameInput.value = event.eventName;
+          nameInput.dataset.eventId = event.id;
+          nameInput.className = "form-control";
+          nameCell.appendChild(nameInput);
+          row.appendChild(nameCell);
+
+          const categoryCell = document.createElement("td");
+          const categoryInput = document.createElement("input");
+          categoryInput.type = "text";
+          categoryInput.value = event.eventCategory;
+          categoryInput.className = "form-control";
+          categoryCell.appendChild(categoryInput);
+          row.appendChild(categoryCell);
+
+          const dateCell = document.createElement("td");
+          const dateInput = document.createElement("input");
+          dateInput.type = "date";
+          dateInput.value = event.eventDate;
+          dateInput.className = "form-control";
+          dateCell.appendChild(dateInput);
+          row.appendChild(dateCell);
+
+          const timeCell = document.createElement("td");
+          const timeInput = document.createElement("input");
+          timeInput.type = "time";
+          timeInput.value = event.eventTime;
+          timeInput.className = "form-control";
+          timeCell.appendChild(timeInput);
+          row.appendChild(timeCell);
+
+          const descCell = document.createElement("td");
+          const descInput = document.createElement("input");
+          descInput.type = "text";
+          descInput.value = event.eventDescription;
+          descInput.className = "form-control";
+          descCell.appendChild(descInput);
+          row.appendChild(descCell);
+
+          const linkCell = document.createElement("td");
+          const linkInput = document.createElement("input");
+          linkInput.type = "text";
+          linkInput.value = event.eventLink;
+          linkInput.className = "form-control";
+          linkCell.appendChild(linkInput);
+          row.appendChild(linkCell);
+
+          // Actions cell (if additional actions are needed)
+          const actionCell = document.createElement("td");
+          // For example, add a temporary "Delete" button if needed
+          const deleteBtn = document.createElement("button");
+          deleteBtn.textContent = "Delete";
+          deleteBtn.className = "btn btn-danger btn-sm";
+          deleteBtn.onclick = function() {
+            // Remove the event from eventsData array (simulated removal)
+            const index = eventsData.findIndex(e => e.id === event.id);
+            if(index > -1) {
+              eventsData.splice(index, 1);
+              populateManageEventsTable();
+            }
+          };
+          actionCell.appendChild(deleteBtn);
+          row.appendChild(actionCell);
+
+          tableBody.appendChild(row);
+        });
+      }
+
+      // Save changes from Manage Events Modal
+      document.getElementById("saveEventsButton").addEventListener("click", function() {
+        // Ideally, you would gather the updated data and send an AJAX request to update the server.
+        // Here we'll simply log the updated eventsData array.
+        // You may want to re-populate eventsData from the table inputs here.
+        console.log("Updated events:", eventsData);
+        // Close the modal after saving if desired.
+        const manageEventsModalEl = document.getElementById("manage_events_modal");
+        const modalInstance = bootstrap.Modal.getInstance(manageEventsModalEl);
+        modalInstance.hide();
+
+        // Optionally, regenerate the calendar to reflect changes.
         const today = new Date();
-        const thisYear = today.getFullYear();
-        const thisMonth = today.getMonth(); // 0-based
-        generateCalendar(thisYear, thisMonth);
+        generateCalendar(today.getFullYear(), today.getMonth());
+      });
+
+      // When the Manage Events modal is shown, populate the table
+      const manageEventsModal = document.getElementById("manage_events_modal");
+      manageEventsModal.addEventListener("show.bs.modal", populateManageEventsTable);
+
+      // Generate calendar on page load
+      document.addEventListener("DOMContentLoaded", () => {
+        const today = new Date();
+        generateCalendar(today.getFullYear(), today.getMonth());
       });
     </script>
+  </body>
 </html>
