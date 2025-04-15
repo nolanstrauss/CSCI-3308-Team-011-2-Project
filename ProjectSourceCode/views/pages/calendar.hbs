@@ -79,6 +79,9 @@
         <td>
           Event Description  
         </td>
+        <td>
+
+        </td>
         </tr>
 
         {{#each events}}
@@ -95,8 +98,18 @@
           <td>
             {{this.eventdescription}}
           </td>
+          <td>
+            <form method="post" action="/calendar/delete">
+                <input type="submit" value="Delete"/>
+                <input type="hidden" name="event_id" value="{{this.eventid}}"/>
+            </form> 
+          </td>
+        </tr>
         {{/each}}
       </table>
+      <p>
+        _
+      </p>
 
 
 
