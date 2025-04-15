@@ -12,6 +12,8 @@ const bodyParser = require('body-parser');
 const session = require('express-session'); // To set the session object. To store or access session data, use the `req.session`, which is (generally) serialized as JSON by the store.
 const bcrypt = require('bcryptjs'); // To hash passwords
 const axios = require('axios'); // To make HTTP requests from our server. We'll learn more about it in Part C.
+const { createEvents } = require('ics'); // For exporting ICS files
+const { v4: uuidv4 } = require('uuid'); // For generating unique eventID
 
 // *****************************************************
 // <!-- Section 2 : Connect to DB -->
@@ -22,6 +24,12 @@ const hbs = handlebars.create({
   extname: 'hbs',
   layoutsDir: __dirname + '/views/layouts',
   partialsDir: __dirname + '/views/partials',
+  helpers: {
+    // This helper outputs valid JSON for your <script>.
+    json: function(context) {
+      return JSON.stringify(context);
+    }
+  }
 });
 
 // database configuration
@@ -55,7 +63,6 @@ app.set('view engine', 'hbs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(bodyParser.json()); // specify the usage of JSON for parsing request body.
 
-// initialize session variables
 app.use(
   session({
     secret: process.env.SESSION_SECRET,
@@ -110,25 +117,21 @@ app.post('/login', async (req, res) => {
   try {
     currentUser = await db.any(query, [username]);
   } catch (err) {
-    return res.redirect('/login');
+    return res.render('pages/login', { error: 'Error checking user.' });
   }
 
-  // If no such user, redirect to register
   if (currentUser.length === 0) {
-    return res.redirect('/register');
+    return res.render('pages/login', { error: 'User does not exist.' });
   }
 
-  // Compare password with hashed password
   const match = await bcrypt.compare(req.body.password, currentUser[0].password);
   if (match) {
-    // Store the user as an array to be compatible with our locas usage (we take index 0 later)
     req.session.currentUser = currentUser;
     req.session.save();
     res.redirect('/calendar');
   } else {
     res.render('pages/login', {
-      error: true,
-      message: 'Username and Password do not match. Please try again.',
+      error: 'Username and Password do not match. Please try again.',
     });
   }
 });
@@ -144,8 +147,7 @@ app.post('/register', async (req, res) => {
   try {
     await db.any(query, [username, hash]);
   } catch (err) {
-    // If there's a DB error (like duplicate username), go back to register
-    redirectPath = '/register';
+    return res.render('pages/register', { error: 'Registration error.' });
   }
   res.redirect(redirectPath);
 });
@@ -164,7 +166,7 @@ app.use('/logout', auth);
 app.use('/edit-calendar', auth);
 app.use('/manage-invitations', auth);
 
-// Logout route: destroys the session, clears cookie, and explicitly sets user to null so the navbar displays "Login/Register"
+// Logout route
 app.get('/logout', (req, res) => {
   req.session.destroy((err) => {
     if (err) {
@@ -179,39 +181,57 @@ app.get('/logout', (req, res) => {
 // Calendar page - must be logged in
 app.get('/calendar', async (req, res) => {
   const username = req.session.currentUser[0].username;
-  var query = `SELECT eventName, eventCategory, eventDate, eventTime, eventDescription FROM events WHERE eventUser = '${username}';`;
+  // NOTE: We convert the DB's date to a string "YYYY-MM-DD" with TO_CHAR
+  const query = `
+    SELECT
+      eventID,
+      eventName,
+      eventCategory,
+      TO_CHAR(eventDate, 'YYYY-MM-DD') AS "eventdate",
+      eventTime,
+      eventDescription,
+      eventColor
+    FROM events
+    WHERE eventUser = $1;
+  `;
   let results = [];
 
   try {
-    results = await db.any(query);
+    results = await db.any(query, [username]);
     console.log("Successfully retrieved " + results.length + " events");
   } catch (err) {
     console.log("Error occured while retrieving events.");
   }
 
+  // Send them to the calendar.hbs, which references "events"
   res.render('pages/calendar', { events: results });
 });
 
 // Example protected route for editing the calendar
 app.get('/edit-calendar', (req, res) => {
-  res.render('pages/edit-calendar'); // Create this view accordingly
+  res.render('pages/edit-calendar');
 });
 
 // Example protected route for managing invitations
 app.get('/manage-invitations', (req, res) => {
-  res.render('pages/manage-invitations'); // Create this view accordingly
+  res.render('pages/manage-invitations');
 });
 
-// Route to create a new calendar event
+// Route to create a new calendar event (with color)
 app.post('/calendar', async (req, res) => {
+  const eventID = uuidv4(); // Generate a unique ID
   const eventName = req.body.event_name;
   const eventCategory = req.body.event_category;
   const eventDate = req.body.event_date;
   const eventTime = req.body.event_time;
   const eventDesc = req.body.event_description;
+  const eventColor = req.body.event_color; // newly added field
   const username = req.session.currentUser[0].username;
   
-  var query = `INSERT INTO events (eventName, eventCategory, eventDate, eventTime, eventDescription, eventUser) VALUES ('${eventName}','${eventCategory}','${eventDate}','${eventTime}','${eventDesc}','${username}');`;
+  var query = `
+    INSERT INTO events (eventID, eventName, eventCategory, eventDate, eventTime, eventDescription, eventColor, eventUser) 
+    VALUES ('${eventID}', '${eventName}', '${eventCategory}', '${eventDate}', '${eventTime}', '${eventDesc}', '${eventColor}', '${username}');
+  `;
   try {
     await db.any(query);
     console.log("Successfully created event.");
@@ -221,9 +241,96 @@ app.post('/calendar', async (req, res) => {
   }
 });
 
+// Route to download ICS
+app.get('/calendar/ics', async (req, res) => {
+  const username = req.session.currentUser[0].username;
+  // Also cast to text here for consistency
+  const query = `
+    SELECT
+      eventName,
+      eventCategory,
+      TO_CHAR(eventDate, 'YYYY-MM-DD') AS "eventdate",
+      eventTime,
+      eventDescription
+    FROM events
+    WHERE eventUser = $1;
+  `;
+  try {
+    const results = await db.any(query, [username]);
+
+    // Now eventdate is a string e.g. '2025-04-15', so we parse it with new Date
+    const icsEvents = results.map((evt) => {
+      const dateObj = new Date(evt.eventdate); 
+      const year = dateObj.getFullYear();
+      const month = dateObj.getMonth() + 1;
+      const day = dateObj.getDate();
+
+      // eventTime is likely "HH:MM:SS" or "HH:MM"
+      const [hour, minute] = evt.eventtime.split(':').map(Number);
+
+      return {
+        title: evt.eventname,
+        start: [year, month, day, hour, minute],
+        description: evt.eventdescription,
+      };
+    });
+
+    const { error, value } = createEvents(icsEvents);
+    if (error) {
+      console.log(error);
+      return res.status(500).send('Error generating ICS.');
+    }
+
+    res.setHeader('Content-disposition', 'attachment; filename="calendar.ics"');
+    res.type('text/calendar');
+    res.send(value);
+  } catch (err) {
+    console.log(err);
+    res.status(500).send('Error generating ICS.');
+  }
+});
+
+//Edit event route
+app.post('/calendar/edit', async (req, res) => {
+  const { eventID, event_name, event_category, event_date, event_time, event_description, event_color } = req.body;
+
+  const query = `
+    UPDATE events
+    SET eventName='${event_name}',
+        eventCategory='${event_category}',
+        eventDate='${event_date}',
+        eventTime='${event_time}',
+        eventDescription='${event_description}',
+        eventColor='${event_color}'
+    WHERE eventID='${eventID}';
+  `;
+  try {
+    await db.any(query);
+    console.log("Successfully updated event.");
+    res.redirect('/calendar');
+  } catch (err) {
+    console.log("Error updating event.", err);
+    res.redirect('/calendar');
+  }
+});
+
+//delete event route
+
+app.post('/calendar/delete', async (req, res) => {
+  try {
+    const { eventID } = req.body;
+    const query = `DELETE FROM events WHERE eventID='${eventID}';`;
+    await db.any(query);
+    console.log("Successfully deleted event.");
+    return res.sendStatus(200);
+  } catch (err) {
+    console.log("Error deleting event.");
+    return res.sendStatus(500);
+  }
+});
+
 // *****************************************************
 // <!-- Section 5 : Start Server-->
 // *****************************************************
-// starting the server and keeping the connection open to listen for more requests
 module.exports = app.listen(3000);
 console.log('Server is listening on port 3000');
