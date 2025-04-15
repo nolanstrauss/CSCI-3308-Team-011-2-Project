@@ -212,7 +212,10 @@ app.get('/calendar', async (req, res) =>
       app.use('/edit-calendar', auth);
       app.use('/manage-invitations', auth);
     }
-    res.render('pages/calendar', { events: results });
+    res.render('pages/calendar', {
+      routeIsCalendar:true,
+      events: results 
+    });
   });
 
 // Logout route: destroys the session, clears cookie, and explicitly sets user to null so the navbar displays "Login/Register"
