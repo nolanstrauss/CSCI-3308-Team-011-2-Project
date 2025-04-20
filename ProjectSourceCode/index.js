@@ -223,7 +223,7 @@ app.get('/calendar', async (req, res) =>
   {
     const username = req.session.currentUser[0].username;
     console.log(username);
-    var query = `SELECT eventName, eventCategory, eventDate, eventDescription, eventID FROM events WHERE eventUser = '${username}' ORDER BY eventDate;`;
+    var query = `SELECT eventName, eventCategory, eventDate, eventDescription, eventID, eventEmailList FROM events WHERE eventUser = '${username}' ORDER BY eventDate;`;
     results = [];
     try 
     {
@@ -263,6 +263,7 @@ app.get('/logout', (req, res) => {
     const eventDesc = req.body.event_description;
     const eventLink = req.body.event_link;
     const username = req.session.currentUser[0].username;
+    const attendees = req.body.event_attendees;
 
     console.log(eventName);
     console.log(eventCategory);
@@ -271,13 +272,14 @@ app.get('/logout', (req, res) => {
     console.log(eventReminderDelay);
     console.log(eventDesc);
     console.log(username);
+    console.log(attendees);
 
     let combinedDateTimeString = req.body.event_date + 'T' + req.body.event_time;
     let combinedDate = new Date(combinedDateTimeString);
     const sqlDateTime = combinedDate.toISOString().slice(0, 19).replace('T', ' ');
     console.log(sqlDateTime);
     
-    var query = `INSERT INTO events (eventName, eventCategory, eventDate, eventReminderDelay, eventDescription, eventLink, eventUser) VALUES ('${eventName}','${eventCategory}','${sqlDateTime}','${eventReminderDelay}','${eventDesc}','${eventLink}','${username}');`;
+    var query = `INSERT INTO events (eventName, eventCategory, eventDate, eventReminderDelay, eventDescription, eventLink, eventUser, eventEmailList) VALUES ('${eventName}','${eventCategory}','${sqlDateTime}','${eventReminderDelay}','${eventDesc}','${eventLink}','${username}','${attendees}');`;
     var redirectPath = '/login';
     try 
     {

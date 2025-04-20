@@ -19,5 +19,6 @@ CREATE TABLE events
     eventReminderDelay INT NOT NULL,
     eventDescription TEXT,
     eventLink VarChar(520),
+    eventEmailList VarChar(1000),
     eventUser VARCHAR(50) NOT NULL
 );
