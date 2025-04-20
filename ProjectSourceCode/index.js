@@ -24,6 +24,35 @@ const hbs = handlebars.create({
   partialsDir: __dirname + '/views/partials',
 });
 
+Handlebars.registerHelper("inc", function(value, options)
+{
+    return parseInt(value) + 1;
+});
+Handlebars.registerHelper("date", function(value, options)
+{
+  dateTime = value.split(' ');
+  dateTime = dateTime[0].split('-');
+  return dateTime[2] + "/" + dateTime[1] + "/" + dateTime[0];
+});
+Handlebars.registerHelper("time", function(value, options)
+{
+  dateTime = value.split(' ');
+  time = dateTime[1].split(':');
+  amPm = 'AM';
+  t = parseInt(time[0]);
+  if (t > 12)
+  {
+    t -= 12;
+    amPm = 'PM';
+  }
+  if (t == 0)
+  {
+    t = 12;
+    amPM = 'PM';
+  }
+  return t + ':' + time[1] + amPm;
+});
+
 // database configuration
 const dbConfig = {
   host: 'db', // the database server
@@ -176,25 +205,28 @@ const auth = (req, res, next) => {
 // Protect routes: calendar, logout, edit-calendar, and manage-invitations
 app.use('/calendar', auth);
 app.use('/logout', auth);
+app.use('/manage-invitations', auth);
   
 app.get('/calendar', async (req, res) => 
   {
     const username = req.session.currentUser[0].username;
     console.log(username);
-    var query = `SELECT eventName, eventCategory, eventDate, eventDescription FROM events WHERE eventUser = '${username}';`;
+    var query = `SELECT eventName, eventCategory, eventDate, eventDescription, eventID, eventEmailList FROM events WHERE eventUser = '${username}' ORDER BY eventDate;`;
     results = [];
     try 
     {
       results = await db.any(query);
       console.log("Successfully retrieved " +  results.length + " events");
+      console.log(results);
+      res.render('pages/calendar', { events: results });
     } 
     catch (err) 
     {
       console.log("Error occured in finding .");
       app.use('/edit-calendar', auth);
       app.use('/manage-invitations', auth);
+      res.render('pages/calendar', {});
     }
-    res.render('pages/calendar', { events: results });
   });
 
 // Logout route: destroys the session, clears cookie, and explicitly sets user to null so the navbar displays "Login/Register"
@@ -219,6 +251,7 @@ app.get('/logout', (req, res) => {
     const eventDesc = req.body.event_description;
     const eventLink = req.body.event_link;
     const username = req.session.currentUser[0].username;
+    const attendees = req.body.event_attendees;
 
     console.log(eventName);
     console.log(eventCategory);
@@ -227,13 +260,14 @@ app.get('/logout', (req, res) => {
     console.log(eventReminderDelay);
     console.log(eventDesc);
     console.log(username);
+    console.log(attendees);
 
     let combinedDateTimeString = req.body.event_date + 'T' + req.body.event_time;
     let combinedDate = new Date(combinedDateTimeString);
     const sqlDateTime = combinedDate.toISOString().slice(0, 19).replace('T', ' ');
     console.log(sqlDateTime);
     
-    var query = `INSERT INTO events (eventName, eventCategory, eventDate, eventReminderDelay, eventDescription, eventLink, eventUser) VALUES ('${eventName}','${eventCategory}','${sqlDateTime}','${eventReminderDelay}','${eventDesc}','${eventLink}','${username}');`;
+    var query = `INSERT INTO events (eventName, eventCategory, eventDate, eventReminderDelay, eventDescription, eventLink, eventUser, eventEmailList) VALUES ('${eventName}','${eventCategory}','${sqlDateTime}','${eventReminderDelay}','${eventDesc}','${eventLink}','${username}','${attendees}');`;
     var redirectPath = '/login';
     try 
     {
@@ -250,15 +284,52 @@ app.get('/logout', (req, res) => {
   res.render('pages/calendar', { events: results });
 });
 
+app.post('/calendar/delete', async (req, res) => 
+  {
+    const eventID = req.body.event_id;
+
+    console.log("Deleting event " + eventID);
+    
+    var query = `DELETE FROM events WHERE eventID = '${eventID}';`;
+    try 
+    {
+      let results = await db.any(query);
+      console.log("Successfully deleted event.");
+    } 
+    catch (err) 
+    {
+      console.log("error in deleting event from table.");
+    };
+    res.redirect('/manage-invitations');
+});
+
+
 // Example protected route for editing the calendar
 app.get('/edit-calendar', (req, res) => {
   res.render('pages/edit-calendar'); // Create this view accordingly
 });
 
-// Example protected route for managing invitations
-app.get('/manage-invitations', (req, res) => {
-  res.render('pages/manage-invitations'); // Create this view accordingly
-});
+app.get('/manage-invitations', async (req, res) => 
+  {
+    const username = req.session.currentUser[0].username;
+    console.log(username);
+    var query = `SELECT eventName, eventCategory, eventDate, eventDescription, eventID FROM events WHERE eventUser = '${username}' ORDER BY eventDate;`;
+    results = [];
+    try 
+    {
+      results = await db.any(query);
+      console.log("Successfully retrieved " +  results.length + " events");
+      console.log(results);
+      res.render('pages/manage-invitations', { events: results });
+    } 
+    catch (err) 
+    {
+      console.log("Error occured in finding .");
+      app.use('/edit-calendar', auth);
+      app.use('/manage-invitations', auth);
+      res.render('pages/manage-invitations', {});
+    }
+  });
 
 // Route to create a new calendar event
 app.post('/calendar', async (req, res) => {
@@ -273,7 +344,7 @@ app.post('/calendar', async (req, res) => {
   try {
     await db.any(query);
     console.log("Successfully created event.");
-    res.redirect('/calendar');
+    res.redirect('/manage-invitations');
   } catch (err) {
     console.log("Error in inserting event into table.");
   }

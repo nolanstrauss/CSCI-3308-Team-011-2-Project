@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Big Calendar</title>
+  </head>
+  <body>
+    <div class="modal" tabindex="-1" id="event_modal">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">Create a new Event!</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                <div>
+                  <form method="post" action="/calendar">
+
+                    <p>Event Name</p>
+                    <input type="text" name="event_name" pattern=".{1+}" required/>
+
+                    <p>Category</p>
+                    <input type="text" name="event_category"/>
+
+                    <p>Date</p>
+                    <input type="date" id="event_date_input" name="event_date" max="9999-12-31" required>
+
+                    <p>Time</p>
+                    <input type="time" name="event_time" required>
+                    
+                    <p>How long before would you like to be notified (in mins)?</p>
+                    <input type="number" name="event_reminder_delay" min="0" required>
+                    
+                    <p>Description</p>
+                    <textarea rows="5" cols="60" name="event_description"></textarea>
+
+                    <p>Link to Event</p>
+                    <input type="text" name="event_link">
+                    
+                    <p>Event Attendees (Seperate multiple emails by commas)</p>
+                    <input type="text" name="event_attendees">
+
+                    <div class="modal-footer"> 
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button class="btn btn-primary" type="submit">
+                      Create Event
+                    </button>
+
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+    </div>
+      <div class="row">
+          <div class="col-2">
+              <div class="custom-container">
+                <button
+                  class="btn btn-primary mt-3"
+                  data-bs-toggle="modal"
+                  data-bs-target="#event_modal" 
+                >
+                  Create Event
+                </button>
+              </div>
+          </div>
+      </div>
+      <hr/>
+      <h3>Upcoming events: </h3>
+      <table>
+        <style>
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: Arial, sans-serif;
+            font-size: 1.1rem;
+          }
+
+          th, td {
+            border: 1px solid #ccc;
+            text-align: center;
+            height: 3rem;
+          }
+        </style>
+        <tr>
+        <td>
+          
+        </td>
+        <td>
+          Event Name  
+        </td>
+        <td>
+          Event Date  
+        </td>
+        <td>
+          Event Time  
+        </td>
+        <td style="text-align: left; width: 20px;">
+          Event Description  
+        </td>
+        <td>
+
+        </td>
+        </tr>
+
+        {{#each events}}
+        <tr>
+          <td>
+            {{inc @index}}
+          </td>
+          <td>
+            {{this.eventname}}
+          </td>
+          <td>
+            {{date this.eventdate}}
+          </td>
+          <td>
+            {{time this.eventdate}}
+          </td>
+          <td style="text-align: left; width: 40%">
+            {{this.eventdescription}}
+          </td>
+          <td>
+            <form method="post" action="/calendar/delete">
+                <input type="submit" value="Delete"/>
+                <input type="hidden" name="event_id" value="{{this.eventid}}"/>
+            </form> 
+          </td>
+        </tr>
+        {{/each}}
+      </table>
+  </body>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+</html>

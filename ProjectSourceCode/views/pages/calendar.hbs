@@ -3,7 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <title>Big Calendar</title>
-    <style>
+  </head>
+  <body>
+    <h1 id="calendarTitle">Loading Calendar...</h1>
+    <div id="calendarContainer">
+      <style>
       /* Simple styling to make the calendar bigger and more readable */
       #calendarContainer {
         width: 80%;
@@ -35,27 +39,32 @@
       .empty {
         background: #fafafa;
       }
+      hr 
+      {
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+        border: 0;
+        border-top: 1px solid rgba(0, 0, 0, 0.1);
+      }
     </style>
-  </head>
-  <body>
-    <h1 id="calendarTitle">Loading Calendar...</h1>
-    <div id="calendarContainer">
       <table id="calendarTable">
         <!-- We’ll populate this table dynamically with JS. -->
       </table>
-      <div class="row">
-          <div class="col-2">
-              <div class="custom-container">
-                <button
-                  class="btn btn-primary mt-3"
-                  data-bs-toggle="modal"
-                  data-bs-target="#event_modal" 
-                >
-                  Create Event
-                </button>
-              </div>
-          </div>
+
+
+      <div class="custom-container">
+        <button
+          class="btn btn-primary mt-3"
+          data-bs-toggle="modal"
+          data-bs-target="#event_modal" 
+        >
+          Create Event
+        </button>
       </div>
+      
+
+
+
       <div class="modal" tabindex="-1" id="event_modal">
           <div class="modal-dialog">
             <div class="modal-content">
@@ -79,7 +88,6 @@
                     <p>Time</p>
                     <input type="time" name="event_time" required>
                     
-
                     <p>How long before would you like to be notified (in mins)?</p>
                     <input type="number" name="event_reminder_delay" min="0" required>
                     
@@ -88,11 +96,16 @@
 
                     <p>Link to Event</p>
                     <input type="text" name="event_link">
+                    
+                    <p>Event Attendees</p>
+                    <input type="text" name="event_attendees">
+
                     <div class="modal-footer"> 
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     <button class="btn btn-primary" type="submit">
                       Create Event
                     </button>
+
                   </div>
                 </form>
               </div>
