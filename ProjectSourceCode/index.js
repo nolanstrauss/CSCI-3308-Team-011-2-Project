@@ -217,6 +217,7 @@ const auth = (req, res, next) => {
 // Protect routes: calendar, logout, edit-calendar, and manage-invitations
 app.use('/calendar', auth);
 app.use('/logout', auth);
+app.use('/manage-invitations', auth);
   
 app.get('/calendar', async (req, res) => 
   {
@@ -309,7 +310,7 @@ app.post('/calendar/delete', async (req, res) =>
     {
       console.log("error in deleting event from table.");
     };
-    res.redirect('/calendar');
+    res.redirect('/manage-invitations');
 });
 
 
@@ -318,10 +319,27 @@ app.get('/edit-calendar', (req, res) => {
   res.render('pages/edit-calendar'); // Create this view accordingly
 });
 
-// Example protected route for managing invitations
-app.get('/manage-invitations', (req, res) => {
-  res.render('pages/manage-invitations'); // Create this view accordingly
-});
+app.get('/manage-invitations', async (req, res) => 
+  {
+    const username = req.session.currentUser[0].username;
+    console.log(username);
+    var query = `SELECT eventName, eventCategory, eventDate, eventDescription, eventID FROM events WHERE eventUser = '${username}' ORDER BY eventDate;`;
+    results = [];
+    try 
+    {
+      results = await db.any(query);
+      console.log("Successfully retrieved " +  results.length + " events");
+      console.log(results);
+      res.render('pages/manage-invitations', { events: results });
+    } 
+    catch (err) 
+    {
+      console.log("Error occured in finding .");
+      app.use('/edit-calendar', auth);
+      app.use('/manage-invitations', auth);
+      res.render('pages/manage-invitations', {});
+    }
+  });
 
 // Route to create a new calendar event
 app.post('/calendar', async (req, res) => {
@@ -336,7 +354,7 @@ app.post('/calendar', async (req, res) => {
   try {
     await db.any(query);
     console.log("Successfully created event.");
-    res.redirect('/calendar');
+    res.redirect('/manage-invitations');
   } catch (err) {
     console.log("Error in inserting event into table.");
   }

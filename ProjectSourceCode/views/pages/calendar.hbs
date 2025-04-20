@@ -50,72 +50,7 @@
       <table id="calendarTable">
         <!-- We’ll populate this table dynamically with JS. -->
       </table>
-      <div class="row">
-          <div class="col-2">
-              <div class="custom-container">
-                <button
-                  class="btn btn-primary mt-3"
-                  data-bs-toggle="modal"
-                  data-bs-target="#event_modal" 
-                >
-                  Create Event
-                </button>
-              </div>
-          </div>
-      </div>
-      <hr/>
-      <h3>Upcoming events: </h3>
-      <table>
-        <tr>
-        <td>
-          
-        </td>
-        <td>
-          Event Name  
-        </td>
-        <td>
-          Event Date  
-        </td>
-        <td>
-          Event Time  
-        </td>
-        <td>
-          Event Description  
-        </td>
-        <td>
-
-        </td>
-        </tr>
-
-        {{#each events}}
-        <tr>
-          <td>
-            {{inc @index}}
-          </td>
-          <td>
-            {{this.eventname}}
-          </td>
-          <td>
-            {{date this.eventdate}}
-          </td>
-          <td>
-            {{time this.eventdate}}
-          </td>
-          <td>
-            {{this.eventdescription}}
-          </td>
-          <td>
-            <form method="post" action="/calendar/delete">
-                <input type="submit" value="Delete"/>
-                <input type="hidden" name="event_id" value="{{this.eventid}}"/>
-            </form> 
-          </td>
-        </tr>
-        {{/each}}
-      </table>
-      <p>
-        _
-      </p>
+      
 
 
 
@@ -142,7 +77,6 @@
                     <p>Time</p>
                     <input type="time" name="event_time" required>
                     
-
                     <p>How long before would you like to be notified (in mins)?</p>
                     <input type="number" name="event_reminder_delay" min="0" required>
                     
@@ -151,11 +85,16 @@
 
                     <p>Link to Event</p>
                     <input type="text" name="event_link">
+                    
+                    <p>Event Attendees</p>
+                    <input type="text" name="event_attendees">
+
                     <div class="modal-footer"> 
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     <button class="btn btn-primary" type="submit">
                       Create Event
                     </button>
+
                   </div>
                 </form>
               </div>
