@@ -159,4 +159,25 @@ let createEvent = async(user_emails,event_name,event_time,reminder_time) => {
 }
 
 
-module.exports = {createEvent}
+let RemoveUserFromEvent = (userEmail, eventName) => {
+  let removed = false;
+  for (let i = events.length - 1; i >= 0; i--) { //go through each event
+    let event = events.get(i);
+    if (event.event_name == eventName) {
+      let index = event.user_emails.indexOf(userEmail);
+      if (index != -1) { //if it is found, remove it
+        event.user_emails.splice(index, 1);
+        removed = true;
+        
+        //if no more users under event, remove the event entirely 
+        if (event.user_emails.length === 0) {
+          events.removeEventById(i);
+        }
+      }
+    }
+  }
+  return removed;
+};
+
+
+module.exports = {createEvent,RemoveUserFromEvent}
