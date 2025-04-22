@@ -1,0 +1,73 @@
+<h1 class="text-center my-4">Account Settings</h1>
+
+<div class="container">
+  <!-- Display Success or Error Messages -->
+  {{#if error}}
+    <div class="alert alert-danger text-center">{{message}}</div>
+  {{/if}}
+
+  {{#if success}}
+    <div class="alert alert-success text-center">{{message}}</div>
+  {{/if}}
+
+  <!-- Change Username -->
+  <div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+      <h5>Change Username</h5>
+    </div>
+    <div class="card-body">
+      <form action="/settings/change-username" method="POST">
+        <div class="mb-3">
+          <label for="new-username" class="form-label">New Username:</label>
+          <input type="text" id="new-username" name="new_username" class="form-control" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Change Username</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Change Password -->
+  <div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+      <h5>Change Password</h5>
+    </div>
+    <div class="card-body">
+      <form action="/settings/change-password" method="POST">
+        <div class="mb-3">
+          <label for="current-password" class="form-label">Current Password:</label>
+          <input type="password" id="current-password" name="current_password" class="form-control" required>
+        </div>
+        <div class="mb-3">
+          <label for="new-password" class="form-label">New Password:</label>
+          <input type="password" id="new-password" name="new_password" class="form-control" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Change Password</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Delete Account -->
+  <div class="card mb-4">
+    <div class="card-header bg-danger text-white">
+      <h5>Delete Account</h5>
+    </div>
+    <div class="card-body">
+      <form action="/settings/delete-account" method="POST">
+        <p class="text-danger">Warning: This action cannot be undone.</p>
+        <button type="submit" class="btn btn-danger">Delete Account</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Log Out -->
+  <div class="card mb-4">
+    <div class="card-header bg-secondary text-white">
+      <h5>Log Out</h5>
+    </div>
+    <div class="card-body">
+      <form action="/logout" method="GET">
+        <button type="submit" class="btn btn-secondary">Log Out</button>
+      </form>
+    </div>
+  </div>
+</div>
