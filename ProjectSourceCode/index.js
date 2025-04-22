@@ -251,6 +251,54 @@ app.get('/logout', (req, res) => {
   });
 });
 
+// Render the settings page
+app.get('/settings', auth, (req, res) => {
+  const user = req.session.currentUser[0];
+  res.render('pages/settings', { user });
+});
+
+// Handle settings update
+app.post('/settings', auth, async (req, res) => {
+  const { username, email, currentPassword, newPassword } = req.body;
+  const user = req.session.currentUser[0];
+
+  // Verify current password
+  const validPassword = await bcrypt.compare(currentPassword, user.password);
+  if (!validPassword) {
+    return res.render('pages/settings', { error: true, message: 'Incorrect current password', user });
+  }
+
+  // Update user information
+  const updates = [];
+  const params = [];
+
+  if (username && username !== user.username) {
+    updates.push('username=$1');
+    params.push(username);
+  }
+
+  if (email && email !== user.email) {
+    updates.push('email=$2');
+    params.push(email);
+  }
+
+  if (newPassword) {
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    updates.push('password=$3');
+    params.push(hashedPassword);
+  }
+
+  if (updates.length > 0) {
+    const query = `UPDATE users SET ${updates.join(', ')} WHERE username=$4`;
+    params.push(user.username);
+    await db.none(query, params);
+    req.session.currentUser[0] = { ...user, username, email, password: newPassword ? hashedPassword : user.password };
+  }
+
+  res.render('pages/settings', { success: true, message: 'Settings updated successfully', user: req.session.currentUser[0] });
+});
+
+
 // *****************************************************
 // <!-- Section 5 : Start Server-->
 // *****************************************************
