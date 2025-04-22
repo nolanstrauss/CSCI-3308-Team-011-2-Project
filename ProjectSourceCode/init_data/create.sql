@@ -22,3 +22,4 @@ CREATE TABLE events
     eventEmailList VarChar(1000),
     eventUser VARCHAR(50) NOT NULL
 );
+

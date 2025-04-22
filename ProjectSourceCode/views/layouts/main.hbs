@@ -1,10 +1,15 @@
-<!-- TODO: Add the head.hbs partial here -->
-{{> head}}
 
-<!-- TODO: Add the nav.hbs partial here -->
-{{>nav}}
+<html lang="en" class="h-100">
+  <head>
+    {{> head}}
+  </head>
+  <body class="h-100 d-flex flex-column">
+    {{> nav}}
 
-{{{body}}}
+    <main class="flex-grow-1">
+      {{{body}}}
+    </main>
 
-<!-- TODO: Add the footer.hbs partial here -->
-{{>footer}}
+    {{> footer}}
+
+

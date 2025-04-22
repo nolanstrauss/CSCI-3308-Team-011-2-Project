@@ -1,13 +1,10 @@
+{{!-- views/partials/nav.hbs --}}
 <header>
   <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
     <div class="container">
 
-      <!-- Website Name -->
-      <a class="navbar-brand fw-bold" href="/">
-        TimeBridge Calendar
-      </a>
+      <a class="navbar-brand fw-bold" href="/">TimeBridge Calendar</a>
 
-      <!-- Toggler for Mobile View -->
       <button
         class="navbar-toggler"
         type="button"
@@ -15,31 +12,27 @@
         data-bs-target="#navbar-collapse"
         aria-controls="navbar-collapse"
         aria-expanded="false"
-        aria-label="Toggle navigation">
+        aria-label="Toggle navigation"
+      >
         <span class="navbar-toggler-icon"></span>
       </button>
 
-      <!-- Navigation Links -->
       <div class="collapse navbar-collapse" id="navbar-collapse">
         <ul class="navbar-nav me-auto">
-          <!-- View Calendar -->
-          <li class="nav-item">
-            <a class="nav-link" href="/calendar">View Calendar</a>
-          </li>
-          <!-- Manage Invitations -->
-          <li class="nav-item">
-            <a class="nav-link" href="/manage-invitations">Manage Invitations</a>
-          </li>
+          <li class="nav-item"><a class="nav-link" href="/calendar">View Calendar</a></li>
+          <li class="nav-item"><a class="nav-link" href="/manage-invitations">Manage Invitations</a></li>
         </ul>
-
-        <!-- Right-Side Navigation -->
         <ul class="navbar-nav ms-auto">
-          <!-- User-Specific Links -->
           {{#if user}}
-            <!-- Dropdown for User Actions -->
             <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
-                 data-bs-toggle="dropdown" aria-expanded="false">
+              <a
+                class="nav-link dropdown-toggle"
+                href="#"
+                id="userDropdown"
+                role="button"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+              >
                 Welcome, {{user.username}}
               </a>
               <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
@@ -50,15 +43,10 @@
               </ul>
             </li>
           {{else}}
-            {{!-- When no user is logged in, display a different option based on route flag --}}
             {{#if routeIsLogin}}
-              <li class="nav-item">
-                <a class="nav-link btn btn-outline-primary px-3" href="/register">Register</a>
-              </li>
+              <li class="nav-item"><a class="nav-link btn btn-outline-primary px-3" href="/register">Register</a></li>
             {{else}}
-              <li class="nav-item">
-                <a class="nav-link btn btn-outline-primary px-3" href="/login">Login</a>
-              </li>
+              <li class="nav-item"><a class="nav-link btn btn-outline-primary px-3" href="/login">Login</a></li>
             {{/if}}
           {{/if}}
         </ul>

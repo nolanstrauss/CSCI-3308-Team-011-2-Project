@@ -2,347 +2,231 @@
 // <!-- Section 1 : Import Dependencies -->
 // *****************************************************
 
-const express = require('express'); // To build an application server or API
+const express = require('express');
 const app = express();
 const handlebars = require('express-handlebars');
 const Handlebars = require('handlebars');
 const path = require('path');
-const pgp = require('pg-promise')(); // To connect to the Postgres DB from the node server
+const pgp = require('pg-promise')();
 const bodyParser = require('body-parser');
-const session = require('express-session'); // To set the session object. To store or access session data, use the `req.session`, which is (generally) serialized as JSON by the store.
-const bcrypt = require('bcryptjs'); // To hash passwords
-const axios = require('axios'); // To make HTTP requests from our server. We'll learn more about it in Part C.
+const session = require('express-session');
+const bcrypt = require('bcryptjs');
+const { createEvents } = require('ics');
 
 // *****************************************************
 // <!-- Section 2 : Connect to DB -->
 // *****************************************************
 
-// create `ExpressHandlebars` instance and configure the layouts and partials dir.
 const hbs = handlebars.create({
   extname: 'hbs',
-  layoutsDir: __dirname + '/views/layouts',
-  partialsDir: __dirname + '/views/partials',
-});
-
-Handlebars.registerHelper("inc", function(value, options)
-{
-    return parseInt(value) + 1;
-});
-Handlebars.registerHelper("date", function(value, options)
-{
-  dateTime = value.split(' ');
-  dateTime = dateTime[0].split('-');
-  return dateTime[1] + "/" + dateTime[2] + "/" + dateTime[0];
-});
-Handlebars.registerHelper("time", function(value, options)
-{
-  dateTime = value.split(' ');
-  time = dateTime[1].split(':');
-  amPm = 'AM';
-  t = parseInt(time[0]);
-  if (t > 12)
-  {
-    t -= 12;
-    amPm = 'PM';
+  layoutsDir: path.join(__dirname, 'views/layouts'),
+  partialsDir: path.join(__dirname, 'views/partials'),
+  defaultLayout: 'main',
+  helpers: {
+    json: ctx => JSON.stringify(ctx)
   }
-  if (t == 0)
-  {
-    t = 12;
-    amPM = 'PM';
-  }
-  return t + ':' + time[1] + amPm;
 });
 
-// database configuration
-const dbConfig = {
-  host: 'db', // the database server
-  port: 5432, // the database port
-  database: process.env.POSTGRES_DB, // the database name
-  user: process.env.POSTGRES_USER, // the user account to connect with
-  password: process.env.POSTGRES_PASSWORD, // the password of the user account
-};
+Handlebars.registerHelper('inc', v => parseInt(v) + 1);
+Handlebars.registerHelper('date', v => {
+  const [d] = v.split(' ');
+  const [y,m,day] = d.split('-');
+  return `${m}/${day}/${y}`;
+});
+Handlebars.registerHelper('time', v => {
+  const [,t] = v.split(' ');
+  let [h,mm] = t.split(':').map(Number);
+  let am = 'AM';
+  if (h >= 12) { am = 'PM'; if (h > 12) h -= 12; }
+  if (h === 0) { h = 12; am = 'PM'; }
+  return `${h}:${String(mm).padStart(2,'0')}${am}`;
+});
 
-const db = pgp(dbConfig);
+const db = pgp({
+  host: 'db',
+  port: 5432,
+  database: process.env.POSTGRES_DB,
+  user: process.env.POSTGRES_USER,
+  password: process.env.POSTGRES_PASSWORD
+});
 
-// test your database
 db.connect()
-  .then((obj) => {
-    console.log('Database connection successful'); // you can view this message in the docker compose logs
-    obj.done(); // success, release the connection;
-  })
-  .catch((error) => {
-    console.log('ERROR:', error.message || error);
-  });
+  .then(c => { console.log('Database connected'); c.done(); })
+  .catch(e => console.error('DB error', e.message));
 
 // *****************************************************
 // <!-- Section 3 : App Settings -->
 // *****************************************************
 
-// Register `hbs` as our view engine using its bound `engine()` function.
 app.engine('hbs', hbs.engine);
 app.set('view engine', 'hbs');
 app.set('views', path.join(__dirname, 'views'));
-app.use(bodyParser.json()); // specify the usage of JSON for parsing request body.
-
-// initialize session variables
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET,
-    saveUninitialized: false,
-    resave: false,
-  })
-);
-
-app.use(
-  bodyParser.urlencoded({
-    extended: true,
-  })
-);
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(session({
+  secret: process.env.SESSION_SECRET,
+  saveUninitialized: false,
+  resave: false
+}));
 
 // *****************************************************
 // <!-- Section 4 : API Routes -->
 // *****************************************************
 
-// Place this code *after* setting up session, but *before* your routes
+// make user available in all templates
 app.use((req, res, next) => {
-  // Store user information in locals to be used in our views
   res.locals.user = req.session.currentUser ? req.session.currentUser[0] : null;
   next();
 });
 
-// Redirect to /login by default
-app.get('/', (req, res) => {
-  res.redirect('/welcome');
-});
+app.get('/',        (req, res) => res.redirect('/welcome'));
+app.get('/welcome', (req, res) => res.render('pages/welcome'));
+app.get('/login',   (req, res) => res.render('pages/login', { routeIsLogin: true }));
+app.get('/register',(req, res) => res.render('pages/register', { routeIsRegister: true }));
 
-// Show the registration page with a flag (if needed)
-app.get('/register', (req, res) => {
-  res.render('pages/register', { routeIsRegister: true });
-});
-
-// Show the login page and pass a flag so the navbar displays "Register" instead of "Login"
-app.get('/login', (req, res) => {
-  res.render('pages/login', { routeIsLogin: true });
-});
-
-// Welcome route
-app.get('/welcome', (req, res) => {
-  res.render('pages/welcome', {});
-});
-
-
-// Login route
 app.post('/login', async (req, res) => {
-  const username = req.body.username;
-  const query = `SELECT username, password FROM users WHERE username = $1;`;
-  let currentUser;
-
-  try {
-    currentUser = await db.any(query, [username]);
-  } catch (err) {
-    return res.redirect('/login');
+  const { username, password } = req.body;
+  let users = await db.any('SELECT username,password FROM users WHERE username=$1', [username]).catch(() => []);
+  if (!users.length) return res.redirect('/register');
+  if (!(await bcrypt.compare(password, users[0].password))) {
+    return res.render('pages/login', { error: true, message: 'Invalid credentials' });
   }
-
-  // If no such user, redirect to register
-  if (currentUser.length === 0) {
-    return res.redirect('/register');
-  }
-
-  // Compare password with hashed password
-  const match = await bcrypt.compare(req.body.password, currentUser[0].password);
-  if (match) {
-    // Store the user as an array to be compatible with our locas usage (we take index 0 later)
-    req.session.currentUser = currentUser;
-    req.session.save();
-    res.redirect('/calendar');
-  } else {
-    res.render('pages/login', {
-      error: true,
-      message: 'Username and Password do not match. Please try again.',
-    });
-  }
+  req.session.currentUser = users;
+  req.session.save(() => res.redirect('/calendar'));
 });
 
-// Register route
 app.post('/register', async (req, res) => {
-  const username = req.body.username;
-  const password = req.body.password;
-
-  // Check if the username already exists
-  let userExists;
-  try {
-    userExists = await db.oneOrNone('SELECT username FROM users WHERE username = $1', [username]);
-  } catch (err) {
-    console.log("Could not connect to database");
+  const { username, password } = req.body;
+  if (await db.oneOrNone('SELECT username FROM users WHERE username=$1', [username])) {
+    return res.render('pages/register', { error: true, message: 'Username taken' });
   }
-  if (userExists) {
-    return res.status(400).render('pages/register', {
-      error: true,
-      message: 'This username is already taken',
-    });
-  }
-
-  // Hash the password and insert the new user
   const hash = await bcrypt.hash(password, 10);
-  try {
-    await db.none('INSERT INTO users (username, password) VALUES ($1, $2)', [username, hash]);
-    res.redirect('/login');
-  } catch (err) {
-    res.render('pages/register', { error: true, message: "Error registering user" });
-  }
+  await db.none('INSERT INTO users(username,password) VALUES($1,$2)', [username, hash]);
+  res.redirect('/login');
 });
 
-
-
-// Authentication middleware: redirects to /login if not authenticated
 const auth = (req, res, next) => {
-  if (!req.session.currentUser) {
-    return res.redirect('/login');
-  }
+  if (!req.session.currentUser) return res.redirect('/login');
   next();
 };
 
-// Protect routes: calendar, logout, edit-calendar, and manage-invitations
 app.use('/calendar', auth);
 app.use('/logout', auth);
-app.use('/manage-invitations', auth);
-  
-app.get('/calendar', async (req, res) => 
-  {
-    const username = req.session.currentUser[0].username;
-    console.log(username);
-    var query = `SELECT eventName, eventCategory, eventDate, eventDescription, eventID, eventEmailList FROM events WHERE eventUser = '${username}' ORDER BY eventDate;`;
-    results = [];
-    try 
-    {
-      results = await db.any(query);
-      console.log("Successfully retrieved " +  results.length + " events");
-      console.log(results);
-      res.render('pages/calendar', { events: results });
-    } 
-    catch (err) 
-    {
-      console.log("Error occured in finding .");
-      app.use('/edit-calendar', auth);
-      app.use('/manage-invitations', auth);
-      res.render('pages/calendar', {});
-    }
-  });
 
-// Logout route: destroys the session, clears cookie, and explicitly sets user to null so the navbar displays "Login/Register"
-app.get('/logout', (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      return res.redirect('/');
-    }
-    res.clearCookie('connect.sid');
-    res.locals.user = null;
-    res.render('pages/logout', {});
-  });
+// display calendar
+app.get('/calendar', async (req, res) => {
+  const user = req.session.currentUser[0].username;
+  const events = await db.any(`
+    SELECT
+      eventid       AS eventid,
+      eventname     AS eventname,
+      eventcategory AS eventcategory,
+      eventdate     AS eventdate,
+      eventdescription AS eventdescription,
+      eventreminderdelay AS eventreminderdelay,
+      eventlink     AS eventlink,
+      eventemaillist  AS eventattendees
+    FROM events
+    WHERE eventuser = $1
+    ORDER BY eventdate;
+  `, [user]);
+  res.render('pages/calendar', { events });
 });
 
-  app.post('/calendar', async (req, res) => 
-  {
-    const eventName = req.body.event_name;
-    const eventCategory = req.body.event_category;
-    const eventDate = req.body.event_date;
-    const eventTime = req.body.event_time;
-    const eventReminderDelay = req.body.event_reminder_delay;
-    const eventDesc = req.body.event_description;
-    const eventLink = req.body.event_link;
-    const username = req.session.currentUser[0].username;
-    const attendees = req.body.event_attendees;
-
-    let combinedDateTimeString = req.body.event_date + 'T' + req.body.event_time;
-    let combinedDate = new Date(combinedDateTimeString);
-    const sqlDateTime = combinedDate.toISOString().slice(0, 19).replace('T', ' ');
-    
-    var query = `INSERT INTO events (eventName, eventCategory, eventDate, eventReminderDelay, eventDescription, eventLink, eventUser, eventEmailList) VALUES ('${eventName}','${eventCategory}','${sqlDateTime}','${eventReminderDelay}','${eventDesc}','${eventLink}','${username}','${attendees}');`;
-    var redirectPath = '/login';
-    try 
-    {
-      let results = await db.any(query);
-      console.log("Successfully created event.");
-      
-      res.redirect('/calendar');
-    } 
-    catch (err) 
-    {
-      console.log("error in inserting event into table.");
+// ICS export
+app.get('/calendar/ics', async (req, res) => {
+  const user = req.session.currentUser[0].username;
+  const rows = await db.any(`
+    SELECT
+      eventname     AS eventname,
+      eventdate     AS eventdate,
+      eventdescription AS eventdescription
+    FROM events
+    WHERE eventuser = $1;
+  `, [user]);
+  const icsArr = rows.map(e => {
+    const d = new Date(e.eventdate);
+    return {
+      title: e.eventname,
+      start: [d.getFullYear(), d.getMonth()+1, d.getDate(), d.getHours(), d.getMinutes()],
+      description: e.eventdescription
     };
-
-  res.render('pages/calendar', { events: results });
-});
-
-app.post('/calendar/delete', async (req, res) => 
-  {
-    const eventID = req.body.event_id;
-
-    console.log("Deleting event " + eventID);
-    
-    var query = `DELETE FROM events WHERE eventID = '${eventID}';`;
-    try 
-    {
-      let results = await db.any(query);
-      console.log("Successfully deleted event.");
-    } 
-    catch (err) 
-    {
-      console.log("error in deleting event from table.");
-    };
-    res.redirect('/manage-invitations');
-});
-
-
-// Example protected route for editing the calendar
-app.get('/edit-calendar', (req, res) => {
-  res.render('pages/edit-calendar'); // Create this view accordingly
-});
-
-app.get('/manage-invitations', async (req, res) => 
-  {
-    const username = req.session.currentUser[0].username;
-    console.log(username);
-    var query = `SELECT eventName, eventCategory, eventDate, eventDescription, eventID FROM events WHERE eventUser = '${username}' ORDER BY eventDate;`;
-    results = [];
-    try 
-    {
-      results = await db.any(query);
-      console.log("Successfully retrieved " +  results.length + " events");
-      console.log(results);
-      res.render('pages/manage-invitations', { events: results });
-    } 
-    catch (err) 
-    {
-      console.log("Error occured in finding .");
-      app.use('/edit-calendar', auth);
-      app.use('/manage-invitations', auth);
-      res.render('pages/manage-invitations', {});
-    }
   });
+  const { error, value } = createEvents(icsArr);
+  if (error) return res.status(500).send('ICS generation error');
+  res.setHeader('Content-disposition','attachment; filename="calendar.ics"');
+  res.type('text/calendar').send(value);
+});
 
-// Route to create a new calendar event
+// create
 app.post('/calendar', async (req, res) => {
-  const eventName = req.body.event_name;
-  const eventCategory = req.body.event_category;
-  const eventDate = req.body.event_date;
-  const eventTime = req.body.event_time;
-  const eventDesc = req.body.event_description;
-  const username = req.session.currentUser[0].username;
-  
-  var query = `INSERT INTO events (eventName, eventCategory, eventDate, eventTime, eventDescription, eventUser) VALUES ('${eventName}','${eventCategory}','${eventDate}','${eventTime}','${eventDesc}','${username}');`;
-  try {
-    await db.any(query);
-    console.log("Successfully created event.");
-    res.redirect('/manage-invitations');
-  } catch (err) {
-    console.log("Error in inserting event into table.");
-  }
+  const {
+    event_name, event_category,
+    event_date, event_time,
+    event_reminder_delay, event_description,
+    event_link, event_attendees
+  } = req.body;
+  const user = req.session.currentUser[0].username;
+  const dt = new Date(`${event_date}T${event_time}`);
+  const sqlTs = dt.toISOString().slice(0,19).replace('T',' ');
+  await db.none(`
+    INSERT INTO events
+      (eventname,eventcategory,eventdate,eventreminderdelay,
+       eventdescription,eventlink,eventuser,eventemaillist)
+    VALUES($1,$2,$3,$4,$5,$6,$7,$8)
+  `, [
+    event_name, event_category, sqlTs,
+    parseInt(event_reminder_delay,10),
+    event_description, event_link,
+    user, event_attendees
+  ]);
+  res.redirect('/calendar');
+});
+
+// edit
+app.post('/calendar/edit', async (req, res) => {
+  const {
+    event_id, event_name, event_category,
+    event_date, event_time,
+    event_reminder_delay, event_description,
+    event_link, event_attendees
+  } = req.body;
+  const dt = new Date(`${event_date}T${event_time}`);
+  const sqlTs = dt.toISOString().slice(0,19).replace('T',' ');
+  await db.none(`
+    UPDATE events SET
+      eventname=$1,
+      eventcategory=$2,
+      eventdate=$3,
+      eventreminderdelay=$4,
+      eventdescription=$5,
+      eventlink=$6,
+      eventemaillist=$7
+    WHERE eventid=$8
+  `, [
+    event_name, event_category, sqlTs,
+    parseInt(event_reminder_delay,10),
+    event_description, event_link,
+    event_attendees, event_id
+  ]);
+  res.redirect('/calendar');
+});
+
+// delete
+app.post('/calendar/delete', async (req, res) => {
+  await db.none('DELETE FROM events WHERE eventid=$1', [req.body.event_id]);
+  res.redirect('/calendar');
+});
+
+app.get('/logout', (req, res) => {
+  req.session.destroy(() => {
+    res.clearCookie('connect.sid');
+    res.render('pages/logout');
+  });
 });
 
 // *****************************************************
 // <!-- Section 5 : Start Server-->
 // *****************************************************
-// starting the server and keeping the connection open to listen for more requests
-module.exports = app.listen(3000);
-console.log('Server is listening on port 3000');
+
+app.listen(3000, () => console.log('Server listening on port 3000'));

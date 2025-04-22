@@ -9,6 +9,7 @@
         "express-handlebars": "^7.1.2",
         "express-session": "1.17.3",
         "handlebars": "^4.7.8",
+        "ics": "^3.8.1",
         "pg-promise": "^10.11.1"
     },
     "devDependencies": {
