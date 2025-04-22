@@ -169,17 +169,43 @@ app.post('/calendar', async (req, res) => {
   const user = req.session.currentUser[0].username;
   const dt = new Date(`${event_date}T${event_time}`);
   const sqlTs = dt.toISOString().slice(0,19).replace('T',' ');
-  await db.none(`
+  const event_result = await db.one(`
     INSERT INTO events
       (eventname,eventcategory,eventdate,eventreminderdelay,
        eventdescription,eventlink,eventuser,eventemaillist)
     VALUES($1,$2,$3,$4,$5,$6,$7,$8)
+    RETURNING eventid
   `, [
     event_name, event_category, sqlTs,
     parseInt(event_reminder_delay,10),
     event_description, event_link,
     user, event_attendees
   ]);
+
+  const event_id = event_result.eventid;
+
+  await db.none(`
+    INSERT INTO users_to_events
+    (username,eventid)
+    VALUES($1,$2)
+  `, [
+    user, event_name
+  ]);
+
+  //seperate the event email list by commas and add each value into the attendees db
+  const attendees = event_attendees.split(',');
+  for (const attendee of attendees) {
+    await db.none(`
+      INSERT INTO events_to_attendees (eventid,attendeeemail)
+      VALUES($1,$2)
+    `, [event_id, attendee]);
+
+    await db.none(`
+      INSERT INTO attendees (attendeeemail) 
+      VALUES($1)
+    `, [attendee]);
+  }
+
   res.redirect('/calendar');
 });
 
