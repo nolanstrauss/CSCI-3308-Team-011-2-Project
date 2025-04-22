@@ -32,7 +32,7 @@ Handlebars.registerHelper("date", function(value, options)
 {
   dateTime = value.split(' ');
   dateTime = dateTime[0].split('-');
-  return dateTime[2] + "/" + dateTime[1] + "/" + dateTime[0];
+  return dateTime[1] + "/" + dateTime[2] + "/" + dateTime[0];
 });
 Handlebars.registerHelper("time", function(value, options)
 {
@@ -237,7 +237,7 @@ app.get('/logout', (req, res) => {
     }
     res.clearCookie('connect.sid');
     res.locals.user = null;
-    res.render('pages/logout', { message: "Logged out successfully!" });
+    res.render('pages/logout', {});
   });
 });
 
@@ -253,19 +253,9 @@ app.get('/logout', (req, res) => {
     const username = req.session.currentUser[0].username;
     const attendees = req.body.event_attendees;
 
-    console.log(eventName);
-    console.log(eventCategory);
-    console.log(eventDate);
-    console.log(eventTime);
-    console.log(eventReminderDelay);
-    console.log(eventDesc);
-    console.log(username);
-    console.log(attendees);
-
     let combinedDateTimeString = req.body.event_date + 'T' + req.body.event_time;
     let combinedDate = new Date(combinedDateTimeString);
     const sqlDateTime = combinedDate.toISOString().slice(0, 19).replace('T', ' ');
-    console.log(sqlDateTime);
     
     var query = `INSERT INTO events (eventName, eventCategory, eventDate, eventReminderDelay, eventDescription, eventLink, eventUser, eventEmailList) VALUES ('${eventName}','${eventCategory}','${sqlDateTime}','${eventReminderDelay}','${eventDesc}','${eventLink}','${username}','${attendees}');`;
     var redirectPath = '/login';
