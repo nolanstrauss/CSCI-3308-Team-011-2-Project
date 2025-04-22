@@ -195,20 +195,20 @@ app.post('/calendar', async (req, res) => {
   //seperate the event email list by commas and add each value into the attendees db
   const attendees = event_attendees.split(',');
   for (const attendee of attendees) {
-    await db.none(`
-      INSERT INTO events_to_attendees (eventid,attendeeemail)
-      VALUES($1,$2)
-    `, [event_id, attendee]);
 
     const user_exists = await db.any(`SELECT attendeeemail FROM attendees WHERE attendeeemail= $1`, [attendee]);
-
-
     if(user_exists.length <0){
       await db.none(`
         INSERT INTO attendees (attendeeemail) 
         VALUES($1)
       `, [attendee]);
     }
+
+    const attendee_exists = await db.any('SELECT attendeeemail FROM events_to_attendees WHERE eventid=$1 AND attendeeemail=$2', [event_id, attendee]);
+    await db.none(`
+      INSERT INTO events_to_attendees (eventid,attendeeemail)
+      VALUES($1,$2)
+    `, [event_id, attendee]);
   }
 
   res.redirect('/calendar');
@@ -241,11 +241,12 @@ app.post('/calendar/edit', async (req, res) => {
       event_description, event_link,
       event_attendees, event_id
     ]);
+
     res.redirect('/calendar');
 
   }catch (err) {
     console.error('Error in /calendar/edit:', err);
-    res.status(500).send('An error occurred while updating the event.');
+    res.status(500).send('An error occurred while updating the event.', err);
   }
 
 });
