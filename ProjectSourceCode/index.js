@@ -4,6 +4,7 @@
 
 const express = require('express');
 const app = express();
+
 const handlebars = require('express-handlebars');
 const Handlebars = require('handlebars');
 const path = require('path');
@@ -73,20 +74,23 @@ app.use(session({
 // <!-- Section 4 : API Routes -->
 // *****************************************************
 
-// make user available in all templates
 app.use((req, res, next) => {
   res.locals.user = req.session.currentUser ? req.session.currentUser[0] : null;
   next();
 });
 
 app.get('/',        (req, res) => res.redirect('/welcome'));
-app.get('/welcome', (req, res) => res.render('pages/welcome'));
+// Welcome route — pass hideNav:true so {{>nav}} is skipped
+app.get('/welcome', (req, res) => {
+  res.render('pages/welcome', { hideNav: true });
+});
+
 app.get('/login',   (req, res) => res.render('pages/login', { routeIsLogin: true }));
 app.get('/register',(req, res) => res.render('pages/register', { routeIsRegister: true }));
 
 app.post('/login', async (req, res) => {
   const { username, password } = req.body;
-  let users = await db.any('SELECT username,password FROM users WHERE username=$1', [username]).catch(() => []);
+  const users = await db.any('SELECT username,password FROM users WHERE username=$1', [username]).catch(() => []);
   if (!users.length) return res.redirect('/register');
   if (!(await bcrypt.compare(password, users[0].password))) {
     return res.render('pages/login', { error: true, message: 'Invalid credentials' });
@@ -111,21 +115,20 @@ const auth = (req, res, next) => {
 };
 
 app.use('/calendar', auth);
-app.use('/logout', auth);
+app.use('/logout',   auth);
 
-// display calendar
 app.get('/calendar', async (req, res) => {
   const user = req.session.currentUser[0].username;
   const events = await db.any(`
     SELECT
-      eventid       AS eventid,
-      eventname     AS eventname,
-      eventcategory AS eventcategory,
-      eventdate     AS eventdate,
-      eventdescription AS eventdescription,
-      eventreminderdelay AS eventreminderdelay,
-      eventlink     AS eventlink,
-      eventemaillist  AS eventattendees
+      eventid,
+      eventname,
+      eventcategory,
+      eventdate,
+      eventdescription,
+      eventreminderdelay,
+      eventlink,
+      eventemaillist      AS eventemaillist     -- keep raw column name
     FROM events
     WHERE eventuser = $1
     ORDER BY eventdate;
@@ -133,24 +136,18 @@ app.get('/calendar', async (req, res) => {
   res.render('pages/calendar', { events });
 });
 
-// ICS export
 app.get('/calendar/ics', async (req, res) => {
   const user = req.session.currentUser[0].username;
   const rows = await db.any(`
-    SELECT
-      eventname     AS eventname,
-      eventdate     AS eventdate,
-      eventdescription AS eventdescription
-    FROM events
-    WHERE eventuser = $1;
+    SELECT eventname, eventdate, eventdescription
+      FROM events
+     WHERE eventuser = $1;
   `, [user]);
   const icsArr = rows.map(e => {
     const d = new Date(e.eventdate);
-    return {
-      title: e.eventname,
-      start: [d.getFullYear(), d.getMonth()+1, d.getDate(), d.getHours(), d.getMinutes()],
-      description: e.eventdescription
-    };
+    return { title: e.eventname,
+             start: [d.getFullYear(), d.getMonth()+1, d.getDate(), d.getHours(), d.getMinutes()],
+             description: e.eventdescription };
   });
   const { error, value } = createEvents(icsArr);
   if (error) return res.status(500).send('ICS generation error');
@@ -169,7 +166,8 @@ app.post('/calendar', async (req, res) => {
   const user = req.session.currentUser[0].username;
   const dt = new Date(`${event_date}T${event_time}`);
   const sqlTs = dt.toISOString().slice(0,19).replace('T',' ');
-  const event_result = await db.one(`
+
+  const { eventid } = await db.one(`
     INSERT INTO events
       (eventname,eventcategory,eventdate,eventreminderdelay,
        eventdescription,eventlink,eventuser,eventemaillist)
@@ -182,28 +180,23 @@ app.post('/calendar', async (req, res) => {
     user, event_attendees
   ]);
 
-  const event_id = event_result.eventid;
-
+  // associate with user
   await db.none(`
-    INSERT INTO users_to_events
-    (username,eventid)
+    INSERT INTO users_to_events(username,eventid)
     VALUES($1,$2)
-  `, [
-    user, event_name
-  ]);
+  `, [user, eventid]);
 
-  //seperate the event email list by commas and add each value into the attendees db
-  const attendees = event_attendees.split(',');
-  for (const attendee of attendees) {
-    await db.none(`
-      INSERT INTO events_to_attendees (eventid,attendeeemail)
-      VALUES($1,$2)
-    `, [event_id, attendee]);
-
-    await db.none(`
-      INSERT INTO attendees (attendeeemail) 
-      VALUES($1)
-    `, [attendee]);
+  // distribute to attendees table
+  const emails = event_attendees.split(',').map(e=>e.trim()).filter(e=>e);
+  for (const email of emails) {
+    await db.none(
+      `INSERT INTO events_to_attendees(eventid,attendeeemail)
+         VALUES($1,$2)`
+    , [eventid, email]);
+    await db.none(
+      `INSERT INTO attendees(attendeeemail) VALUES($1)
+         ON CONFLICT(attendeeemail) DO NOTHING`
+    , [email]);
   }
 
   res.redirect('/calendar');
@@ -245,115 +238,69 @@ app.post('/calendar/delete', async (req, res) => {
 });
 
 app.get('/logout', (req, res) => {
-  req.session.destroy(() => {
+  req.session.destroy((err) => {
+    if (err) {
+      return res.redirect('/');
+    }
     res.clearCookie('connect.sid');
-    res.render('pages/logout');
+    // ensure the template helper sees no user
+    res.locals.user = null;
+    // render logout page—navbar will now show the Login button
+    res.render('pages/logout', {});
   });
 });
-
 // Render the settings page
-app.get('/settings', (req, res) => {
-  if (!req.session.currentUser) {
-    return res.redirect('/login'); // Redirect to login if the user is not authenticated
+app.get('/settings', auth, (req, res) => {
+  const user = req.session.currentUser[0];
+  res.render('pages/settings', { user });
+});
+
+// Handle settings update
+app.post('/settings', auth, async (req, res) => {
+  const { username, email, currentPassword, newPassword } = req.body;
+  const user = req.session.currentUser[0];
+
+  // Verify current password
+  const validPassword = await bcrypt.compare(currentPassword, user.password);
+  if (!validPassword) {
+    return res.render('pages/settings', { error: true, message: 'Incorrect current password', user });
   }
 
-  res.render('pages/settings', {
-    user_exists: true,
-    user: req.session.currentUser[0], // Pass the current user to the template
-  });
+  // Update user information
+  const updates = [];
+  const params = [];
+
+  if (username && username !== user.username) {
+    updates.push('username=$1');
+    params.push(username);
+  }
+
+  if (email && email !== user.email) {
+    updates.push('email=$2');
+    params.push(email);
+  }
+
+  if (newPassword) {
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    updates.push('password=$3');
+    params.push(hashedPassword);
+  }
+
+  if (updates.length > 0) {
+    const query = `UPDATE users SET ${updates.join(', ')} WHERE username=$4`;
+    params.push(user.username);
+    await db.none(query, params);
+    req.session.currentUser[0] = { ...user, username, email, password: newPassword ? hashedPassword : user.password };
+  }
+
+  res.render('pages/settings', { success: true, message: 'Settings updated successfully', user: req.session.currentUser[0] });
 });
-  app.post('/settings/change-username', async (req, res) => {
-    const newUsername = req.body.new_username;
-    const currentUsername = req.session.currentUser[0].username;
-  
-    try {
-      // Check if the new username already exists
-      const userExists = await db.oneOrNone('SELECT username FROM users WHERE username = $1', [newUsername]);
-      if (userExists) {
-        return res.status(400).render('pages/settings', {
-          error: true,
-          message: 'This username is already taken.',
-        });
-      }
-  
-      // Update the username
-      await db.none('UPDATE users SET username = $1 WHERE username = $2', [newUsername, currentUsername]);
-  
-      // Update session data
-      req.session.currentUser[0].username = newUsername;
-  
-      res.render('pages/settings', {
-        success: true,
-        message: 'Username updated successfully.',
-      });
-    } catch (err) {
-      console.error(err);
-      res.status(500).render('pages/settings', {
-        error: true,
-        message: 'An error occurred while updating your username.',
-      });
-    }
-  });
-  app.post('/settings/change-password', async (req, res) => {
-    const currentPassword = req.body.current_password;
-    const newPassword = req.body.new_password;
-    const currentUsername = req.session.currentUser[0].username;
-  
-    try {
-      // Get the current password hash
-      const user = await db.one('SELECT password FROM users WHERE username = $1', [currentUsername]);
-  
-      // Verify the current password
-      const match = await bcrypt.compare(currentPassword, user.password);
-      if (!match) {
-        return res.status(400).render('pages/settings', {
-          error: true,
-          message: 'Current password is incorrect.',
-        });
-      }
-  
-      // Hash the new password and update it
-      const newHash = await bcrypt.hash(newPassword, 10);
-      await db.none('UPDATE users SET password = $1 WHERE username = $2', [newHash, currentUsername]);
-  
-      res.render('pages/settings', {
-        success: true,
-        message: 'Password updated successfully.',
-      });
-    } catch (err) {
-      console.error(err);
-      res.status(500).render('pages/settings', {
-        error: true,
-        message: 'An error occurred while updating your password.',
-      });
-    }
-  });
-  app.post('/settings/delete-account', async (req, res) => {
-    const currentUsername = req.session.currentUser[0].username;
-  
-    try {
-      // Delete the user from the database
-      await db.none('DELETE FROM users WHERE username = $1', [currentUsername]);
-  
-      // Destroy the session
-      req.session.destroy();
-  
-      res.redirect('/register');
-    } catch (err) {
-      console.error(err);
-      res.status(500).render('pages/settings', {
-        error: true,
-        message: 'An error occurred while deleting your account.',
-      });
-    }
-  });
-  app.use((req, res, next) => {
-    res.locals.user = req.session.currentUser ? req.session.currentUser[0] : null;
-    next();
-  });
+
+
+
 
 // *****************************************************
-// <!-- Section 5 : Start Server-->
+// <!-- Section 5 : Start Server--> 
 // *****************************************************
 
 app.listen(3000, () => console.log('Server listening on port 3000'));

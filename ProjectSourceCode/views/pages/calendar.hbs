@@ -1,5 +1,3 @@
-
-
 <h1 id="calendarTitle" class="text-center my-4">Loading Calendar...</h1>
 
 <div id="calendarContainer" class="mx-auto" style="width:80%;">
@@ -63,8 +61,7 @@
           <p>Category</p><input name="event_category" class="form-control">
           <p>Date</p><input type="date" name="event_date" class="form-control" required>
           <p>Time</p><input type="time" name="event_time" class="form-control" required>
-          <p>Reminder (mins before)</p>
-          <input type="number" name="event_reminder_delay" class="form-control" min="0" required>
+          <p>Reminder (mins before)</p><input type="number" name="event_reminder_delay" class="form-control" min="0" required>
           <p>Description</p><textarea name="event_description" class="form-control"></textarea>
           <p>Link to Event</p><input name="event_link" class="form-control">
           <p>Attendees (emails)</p><input name="event_attendees" class="form-control">
@@ -93,8 +90,7 @@
           <p>Category</p><input name="event_category" id="edit_category" class="form-control">
           <p>Date</p><input type="date" name="event_date" id="edit_date" class="form-control">
           <p>Time</p><input type="time" name="event_time" id="edit_time" class="form-control">
-          <p>Reminder (mins before)</p>
-          <input type="number" name="event_reminder_delay" id="edit_reminder" class="form-control">
+          <p>Reminder (mins before)</p><input type="number" name="event_reminder_delay" id="edit_reminder" class="form-control">
           <p>Description</p><textarea name="event_description" id="edit_description" class="form-control"></textarea>
           <p>Link to Event</p><input name="event_link" id="edit_link" class="form-control">
           <p>Attendees (emails)</p><input name="event_attendees" id="edit_attendees" class="form-control">
@@ -143,9 +139,7 @@
     const firstDay = new Date(y, m, 1).getDay();
     const daysInMonth = new Date(y, m+1, 0).getDate();
     let row = document.createElement('tr');
-    for (let i = 0; i < firstDay; i++) {
-      row.appendChild(document.createElement('td'));
-    }
+    for (let i = 0; i < firstDay; i++) row.appendChild(document.createElement('td'));
     for (let d = 1; d <= daysInMonth; d++) {
       if ((firstDay + d - 1) % 7 === 0 && d > 1) {
         table.appendChild(row);
@@ -165,16 +159,16 @@
         eb.className = 'eventBlock';
         eb.textContent = `${ev.time} – ${ev.eventname}`;
         eb.onclick = () => {
-          document.getElementById('edit_event_id').value = ev.eventid;
-          document.getElementById('delete_event_id').value = ev.eventid;
-          document.getElementById('edit_name').value = ev.eventname;
-          document.getElementById('edit_category').value = ev.eventcategory;
-          document.getElementById('edit_date').value = key;
-          document.getElementById('edit_time').value = ev.time;
-          document.getElementById('edit_reminder').value = ev.eventreminderdelay || '';
-          document.getElementById('edit_description').value = ev.eventdescription;
-          document.getElementById('edit_link').value = ev.eventlink;
-          document.getElementById('edit_attendees').value = ev.eventattendees;
+          document.getElementById('edit_event_id').value     = ev.eventid;
+          document.getElementById('delete_event_id').value   = ev.eventid;
+          document.getElementById('edit_name').value         = ev.eventname;
+          document.getElementById('edit_category').value     = ev.eventcategory;
+          document.getElementById('edit_date').value         = key;
+          document.getElementById('edit_time').value         = ev.time;
+          document.getElementById('edit_reminder').value     = ev.eventreminderdelay || '';
+          document.getElementById('edit_description').value  = ev.eventdescription;
+          document.getElementById('edit_link').value         = ev.eventlink;
+          document.getElementById('edit_attendees').value    = ev.eventemaillist;  // ← now correct
           new bootstrap.Modal(document.getElementById('edit_modal')).show();
         };
         td.appendChild(eb);
@@ -182,9 +176,7 @@
 
       row.appendChild(td);
     }
-    while (row.children.length < 7) {
-      row.appendChild(document.createElement('td'));
-    }
+    while (row.children.length < 7) row.appendChild(document.createElement('td'));
     table.appendChild(row);
 
     document.getElementById('calendarTitle').textContent =
@@ -199,7 +191,5 @@
     if (++month > 11) { month = 0; year++; }
     renderCalendar(year, month);
   };
-  document.addEventListener('DOMContentLoaded', () => {
-    renderCalendar(year, month);
-  });
+  document.addEventListener('DOMContentLoaded', () => renderCalendar(year, month));
 </script>

@@ -1,45 +1,26 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Welcome</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      margin: 0;
-      padding: 0;
-      background-color: #f4f4f9;
-    }
-    h1 {
-      color: #333;
-      margin-top: 50px;
-    }
-    p {
-      color: #555;
-    }
-    a {
-      display: inline-block;
-      margin: 10px;
-      padding: 10px 20px;
-      text-decoration: none;
-      color: white;
-      background-color: #007BFF;
-      border-radius: 5px;
-    }
-    a:hover {
-      background-color: #0056b3;
-    }
-  </style>
-</head>
-<body>
-  <h1>Welcome to Our Application!</h1>
-  <p>We're glad to have you here.</p>
-  <div>
-    <a href="/login">Login</a>
-    <a href="/register">Register</a>
-    <a href="/calendar">View Calendar</a>
+{{!-- views/pages/welcome.hbs --}}
+<style>
+  .welcome-page {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .welcome-page .content {
+    color: #fff;
+    max-width: 500px;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  }
+</style>
+
+<div class="welcome-page">
+  <div class="content text-center">
+    <h1 class="display-3 mb-3">Welcome to TimeBridge Calendar!</h1>
+    <p class="lead mb-4">Stay on top of your schedule with ease. Let’s get you started.</p>
+    <div class="d-flex justify-content-center gap-3">
+      <a href="/login" class="btn btn-light btn-lg">Login</a>
+      <a href="/register" class="btn btn-outline-light btn-lg">Register</a>
+    </div>
   </div>
-</body>
-</html>
+</div>
