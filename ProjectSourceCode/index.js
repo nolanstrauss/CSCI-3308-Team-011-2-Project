@@ -74,23 +74,29 @@ app.use(session({
 // <!-- Section 4 : API Routes -->
 // *****************************************************
 
+// make user available in all templates
 app.use((req, res, next) => {
   res.locals.user = req.session.currentUser ? req.session.currentUser[0] : null;
   next();
 });
 
 app.get('/',        (req, res) => res.redirect('/welcome'));
-// Welcome route — pass hideNav:true so {{>nav}} is skipped
+
+// Welcome route — pass hideNav:true so {{>nav}} can skip itself
 app.get('/welcome', (req, res) => {
   res.render('pages/welcome', { hideNav: true });
 });
 
-app.get('/login',   (req, res) => res.render('pages/login', { routeIsLogin: true }));
-app.get('/register',(req, res) => res.render('pages/register', { routeIsRegister: true }));
+app.get('/login',    (req, res) => res.render('pages/login',    { routeIsLogin:    true }));
+app.get('/register', (req, res) => res.render('pages/register', { routeIsRegister: true }));
 
+// Login
 app.post('/login', async (req, res) => {
   const { username, password } = req.body;
-  const users = await db.any('SELECT username,password FROM users WHERE username=$1', [username]).catch(() => []);
+  const users = await db.any(
+    'SELECT username,password FROM users WHERE username=$1',
+    [username]
+  ).catch(() => []);
   if (!users.length) return res.redirect('/register');
   if (!(await bcrypt.compare(password, users[0].password))) {
     return res.render('pages/login', { error: true, message: 'Invalid credentials' });
@@ -99,16 +105,35 @@ app.post('/login', async (req, res) => {
   req.session.save(() => res.redirect('/calendar'));
 });
 
+// Register
 app.post('/register', async (req, res) => {
-  const { username, password } = req.body;
-  if (await db.oneOrNone('SELECT username FROM users WHERE username=$1', [username])) {
-    return res.render('pages/register', { error: true, message: 'Username taken' });
+  const { username, password } = req.body;  // username is really the email
+
+  // Check if already exists
+  const exists = await db.oneOrNone(
+    'SELECT username FROM users WHERE username=$1',
+    [username]
+  );
+  if (exists) {
+    return res.render('pages/register', {
+      error: true,
+      message: 'An account with that email already exists.'
+    });
   }
+
   const hash = await bcrypt.hash(password, 10);
-  await db.none('INSERT INTO users(username,password) VALUES($1,$2)', [username, hash]);
+
+  // Insert into both username and email columns
+  await db.none(
+    `INSERT INTO users(username,password,email)
+       VALUES($1,$2,$1)`,
+    [username, hash]
+  );
+
   res.redirect('/login');
 });
 
+// Auth middleware
 const auth = (req, res, next) => {
   if (!req.session.currentUser) return res.redirect('/login');
   next();
@@ -117,7 +142,7 @@ const auth = (req, res, next) => {
 app.use('/calendar', auth);
 app.use('/logout',   auth);
 
-// === UPDATED GET /calendar ===
+// Calendar view
 app.get('/calendar', async (req, res) => {
   const user = req.session.currentUser[0].username;
   const events = await db.any(`
@@ -125,11 +150,11 @@ app.get('/calendar', async (req, res) => {
       eventid,
       eventname,
       eventcategory,
-      to_char(eventdate,'YYYY-MM-DD HH24:MI:SS') AS eventdate,
+      eventdate,
       eventdescription,
       eventreminderdelay,
       eventlink,
-      eventemaillist AS eventemaillist
+      eventemaillist
     FROM events
     WHERE eventuser = $1
     ORDER BY eventdate;
@@ -137,7 +162,7 @@ app.get('/calendar', async (req, res) => {
   res.render('pages/calendar', { events });
 });
 
-// ICS export (unchanged)
+// ICS export
 app.get('/calendar/ics', async (req, res) => {
   const user = req.session.currentUser[0].username;
   const rows = await db.any(`
@@ -145,21 +170,23 @@ app.get('/calendar/ics', async (req, res) => {
       FROM events
      WHERE eventuser = $1;
   `, [user]);
+
   const icsArr = rows.map(e => {
     const d = new Date(e.eventdate);
     return {
-      title:       e.eventname,
-      start:       [d.getFullYear(), d.getMonth()+1, d.getDate(), d.getHours(), d.getMinutes()],
+      title: e.eventname,
+      start: [d.getFullYear(), d.getMonth()+1, d.getDate(), d.getHours(), d.getMinutes()],
       description: e.eventdescription
     };
   });
+
   const { error, value } = createEvents(icsArr);
   if (error) return res.status(500).send('ICS generation error');
   res.setHeader('Content-disposition','attachment; filename="calendar.ics"');
   res.type('text/calendar').send(value);
 });
 
-// === UPDATED CREATE handler ===
+// CREATE Event
 app.post('/calendar', async (req, res) => {
   const {
     event_name, event_category,
@@ -168,8 +195,11 @@ app.post('/calendar', async (req, res) => {
     event_link, event_attendees
   } = req.body;
   const user = req.session.currentUser[0].username;
-  const sqlTs = `${event_date} ${event_time}`;  // no Date() → toISOString()
 
+  // build timestamp string
+  const sqlTs = `${event_date} ${event_time}:00`;
+
+  // insert main event
   const { eventid } = await db.one(`
     INSERT INTO events
       (eventname,eventcategory,eventdate,eventreminderdelay,
@@ -183,31 +213,30 @@ app.post('/calendar', async (req, res) => {
     user, event_attendees
   ]);
 
-  // associate with user
+  // link to user
   await db.none(`
     INSERT INTO users_to_events(username,eventid)
     VALUES($1,$2)
   `, [user, eventid]);
 
-  // distribute to attendees table
+  // distribute attendee emails
   const emails = event_attendees.split(',').map(e=>e.trim()).filter(e=>e);
   for (const email of emails) {
-    await db.none(
-      `INSERT INTO events_to_attendees(eventid,attendeeemail)
-         VALUES($1,$2)`,
-      [eventid, email]
-    );
-    await db.none(
-      `INSERT INTO attendees(attendeeemail) VALUES($1)
-         ON CONFLICT(attendeeemail) DO NOTHING`,
-      [email]
-    );
+    await db.none(`
+      INSERT INTO events_to_attendees(eventid,attendeeemail)
+      VALUES($1,$2)
+    `, [eventid, email]);
+    await db.none(`
+      INSERT INTO attendees(attendeeemail)
+      VALUES($1)
+      ON CONFLICT(attendeeemail) DO NOTHING
+    `, [email]);
   }
 
   res.redirect('/calendar');
 });
 
-// === UPDATED EDIT handler ===
+// EDIT Event
 app.post('/calendar/edit', async (req, res) => {
   const {
     event_id, event_name, event_category,
@@ -215,7 +244,8 @@ app.post('/calendar/edit', async (req, res) => {
     event_reminder_delay, event_description,
     event_link, event_attendees
   } = req.body;
-  const sqlTs = `${event_date} ${event_time}`;  // no Date() → toISOString()
+
+  const sqlTs = `${event_date} ${event_time}:00`;
 
   await db.none(`
     UPDATE events SET
@@ -237,83 +267,23 @@ app.post('/calendar/edit', async (req, res) => {
   res.redirect('/calendar');
 });
 
-// DELETE (unchanged)
+// DELETE Event
 app.post('/calendar/delete', async (req, res) => {
   await db.none('DELETE FROM events WHERE eventid=$1', [req.body.event_id]);
   res.redirect('/calendar');
 });
 
+// Logout
 app.get('/logout', (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      return res.redirect('/');
-    }
+  req.session.destroy(err => {
+    if (err) return res.redirect('/');
     res.clearCookie('connect.sid');
-    // ensure the template helper sees no user
     res.locals.user = null;
-    // render logout page—navbar will now show the Login button
     res.render('pages/logout', {});
   });
 });
 
-// Render the settings page (unchanged)
-app.get('/settings', auth, (req, res) => {
-  const user = req.session.currentUser[0];
-  res.render('pages/settings', { user });
-});
-
-// Handle settings update (unchanged)
-app.post('/settings', auth, async (req, res) => {
-  const { username, email, currentPassword, newPassword } = req.body;
-  const user = req.session.currentUser[0];
-
-  // Verify current password
-  const validPassword = await bcrypt.compare(currentPassword, user.password);
-  if (!validPassword) {
-    return res.render('pages/settings', { error: true, message: 'Incorrect current password', user });
-  }
-
-  // Update user information
-  const updates = [];
-  const params = [];
-
-  if (username && username !== user.username) {
-    updates.push('username=$1');
-    params.push(username);
-  }
-
-  if (email && email !== user.email) {
-    updates.push('email=$2');
-    params.push(email);
-  }
-
-  if (newPassword) {
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    updates.push('password=$3');
-    params.push(hashedPassword);
-  }
-
-  if (updates.length > 0) {
-    const query = `UPDATE users SET ${updates.join(', ')} WHERE username=$4`;
-    params.push(user.username);
-    await db.none(query, params);
-    req.session.currentUser[0] = {
-      ...user,
-      username,
-      email,
-      password: newPassword ? hashedPassword : user.password
-    };
-  }
-
-  res.render('pages/settings', {
-    success: true,
-    message: 'Settings updated successfully',
-    user: req.session.currentUser[0]
-  });
-});
-
 // *****************************************************
-// <!-- Section 5 : Start Server--> 
+// <!-- Section 5 : Start Server-->
 // *****************************************************
-
 app.listen(3000, () => console.log('Server listening on port 3000'));
