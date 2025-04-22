@@ -204,7 +204,6 @@ app.get('/logout', (req, res) =>
     req.session.destroy();
     res.render('pages/logout',{message: "Logged out successfully!"});
   });
-
 app.get('/calendar', async (req, res) => 
   {
     const username = req.session.currentUser[0].username;
