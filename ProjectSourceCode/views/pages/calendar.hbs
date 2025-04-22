@@ -1,194 +1,205 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Big Calendar</title>
-  </head>
-  <body>
-    <h1 id="calendarTitle">Loading Calendar...</h1>
-    <div id="calendarContainer">
-      <style>
-      /* Simple styling to make the calendar bigger and more readable */
-      #calendarContainer {
-        width: 80%;
-        margin: 0 auto;
-        margin-top: 2rem;
-      }
-
-      #calendarTitle {
-        text-align: center;
-      }
-
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        font-family: Arial, sans-serif;
-        font-size: 1.1rem;
-      }
-
-      th, td {
-        border: 1px solid #ccc;
-        text-align: center;
-        height: 3rem;
-      }
-
-      th {
-        background: #f2f2f2;
-      }
-
-      .empty {
-        background: #fafafa;
-      }
-      hr 
-      {
-        margin-top: 1rem;
-        margin-bottom: 1rem;
-        border: 0;
-        border-top: 1px solid rgba(0, 0, 0, 0.1);
-      }
-    </style>
-      <table id="calendarTable">
-        <!-- We’ll populate this table dynamically with JS. -->
-      </table>
 
 
-      <div class="custom-container">
-        <button
-          class="btn btn-primary mt-3"
-          data-bs-toggle="modal"
-          data-bs-target="#event_modal" 
-        >
-          Create Event
-        </button>
-      </div>
-      
+<h1 id="calendarTitle" class="text-center my-4">Loading Calendar...</h1>
 
+<div id="calendarContainer" class="mx-auto" style="width:80%;">
+  <style>
+    table#calendarTable {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-family: Arial, sans-serif;
+      font-size: 1.1rem;
+    }
+    table#calendarTable th,
+    table#calendarTable td {
+      border: 1px solid #ccc;
+      vertical-align: top;
+      padding: 4px;
+      width: 14.2857%;
+      height: 120px;
+      overflow: hidden;
+    }
+    table#calendarTable th { background: #f2f2f2; }
+    .eventBlock {
+      display: block;
+      margin-top: 4px;
+      padding: 2px 4px;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      color: #fff;
+      cursor: pointer;
+      background: #0d6efd;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+    .controls { text-align:center; margin-bottom:1rem; }
+    .controls button,
+    .controls a { margin: 0 .3rem; }
+  </style>
 
+  <div class="controls">
+    <button id="prevMonth" class="btn btn-secondary btn-sm">Prev</button>
+    <button id="nextMonth" class="btn btn-secondary btn-sm">Next</button>
+    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#event_modal">
+      Create Event
+    </button>
+    <a href="/calendar/ics" class="btn btn-success btn-sm">Download ICS</a>
+  </div>
 
-      <div class="modal" tabindex="-1" id="event_modal">
-          <div class="modal-dialog">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title">Create a new Event!</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-              </div>
-              <div class="modal-body">
-                <div>
-                  <form method="post" action="/calendar">
+  <table id="calendarTable"></table>
 
-                    <p>Event Name</p>
-                    <input type="text" name="event_name" pattern=".{1+}" required/>
-
-                    <p>Category</p>
-                    <input type="text" name="event_category"/>
-
-                    <p>Date</p>
-                    <input type="date" id="event_date_input" name="event_date" max="9999-12-32" required>
-
-                    <p>Time</p>
-                    <input type="time" name="event_time" required>
-                    
-                    <p>How long before would you like to be notified (in mins)?</p>
-                    <input type="number" name="event_reminder_delay" min="0" required>
-                    
-                    <p>Description</p>
-                    <textarea rows="5" cols="60" name="event_description"></textarea>
-
-                    <p>Link to Event</p>
-                    <input type="text" name="event_link">
-                    
-                    <p>Event Attendees</p>
-                    <input type="text" name="event_attendees">
-
-                    <div class="modal-footer"> 
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button class="btn btn-primary" type="submit">
-                      Create Event
-                    </button>
-
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
+  {{!-- Create Event Modal --}}
+  <div class="modal fade" id="event_modal" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content">
+      <form method="post" action="/calendar">
+        <div class="modal-header">
+          <h5 class="modal-title">Create a new Event!</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
-    </body>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-    <script>
-      // Generate a calendar for the specified year and month (0-based month index)
-      function generateCalendar(year, month) {
-        const monthNames = [
-          "January", "February", "March", "April", "May", "June",
-          "July", "August", "September", "October", "November", "December"
-        ];
+        <div class="modal-body">
+          <p>Event Name</p><input name="event_name" class="form-control" required>
+          <p>Category</p><input name="event_category" class="form-control">
+          <p>Date</p><input type="date" name="event_date" class="form-control" required>
+          <p>Time</p><input type="time" name="event_time" class="form-control" required>
+          <p>Reminder (mins before)</p>
+          <input type="number" name="event_reminder_delay" class="form-control" min="0" required>
+          <p>Description</p><textarea name="event_description" class="form-control"></textarea>
+          <p>Link to Event</p><input name="event_link" class="form-control">
+          <p>Attendees (emails)</p><input name="event_attendees" class="form-control">
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button class="btn btn-primary" type="submit">Create Event</button>
+        </div>
+      </form>
+    </div></div>
+  </div>
 
-        // Use a Date object to figure out the first day and number of days in the month
-        const firstDay = new Date(year, month, 1);
-        const daysInMonth = new Date(year, month + 1, 0).getDate(); // e.g. Apr+1=May, day=0 => last day of Apr
+  {{!-- Edit Event Modal --}}
+  <div class="modal fade" id="edit_modal" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content">
 
-        // Title
-        const calendarTitle = document.getElementById("calendarTitle");
-        calendarTitle.textContent = `${monthNames[month]} ${year}`;
+      <!-- EDIT FORM -->
+      <form method="post" action="/calendar/edit">
+        <input type="hidden" name="event_id" id="edit_event_id">
+        <div class="modal-header">
+          <h5 class="modal-title">Edit Event</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p>Event Name</p><input name="event_name" id="edit_name" class="form-control">
+          <p>Category</p><input name="event_category" id="edit_category" class="form-control">
+          <p>Date</p><input type="date" name="event_date" id="edit_date" class="form-control">
+          <p>Time</p><input type="time" name="event_time" id="edit_time" class="form-control">
+          <p>Reminder (mins before)</p>
+          <input type="number" name="event_reminder_delay" id="edit_reminder" class="form-control">
+          <p>Description</p><textarea name="event_description" id="edit_description" class="form-control"></textarea>
+          <p>Link to Event</p><input name="event_link" id="edit_link" class="form-control">
+          <p>Attendees (emails)</p><input name="event_attendees" id="edit_attendees" class="form-control">
+        </div>
+        <div class="modal-footer d-flex w-100">
+          <button class="btn btn-primary me-auto" type="submit">Save Changes</button>
+          <button class="btn btn-secondary mx-2" data-bs-dismiss="modal">Close</button>
+        </div>
+      </form>
 
-        // Table element
-        const calendarTable = document.getElementById("calendarTable");
-        calendarTable.innerHTML = ""; // Clear any existing table rows
+      <!-- DELETE FORM -->
+      <div class="px-3 pb-3 text-end">
+        <form method="post" action="/calendar/delete">
+          <input type="hidden" name="event_id" id="delete_event_id">
+          <button class="btn btn-danger">Delete</button>
+        </form>
+      </div>
 
-        // Row for day names
-        const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-        let headerRow = document.createElement("tr");
-        dayNames.forEach(day => {
-          let th = document.createElement("th");
-          th.textContent = day;
-          headerRow.appendChild(th);
-        });
-        calendarTable.appendChild(headerRow);
+    </div></div>
+  </div>
+</div>
 
-        // Determine the day of the week for the 1st of the month
-        let startDay = firstDay.getDay(); // 0=Sunday, 1=Monday, etc.
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  const eventsByDate = {};
+  {{{json events}}}.forEach(ev => {
+    const dt = new Date(ev.eventdate);
+    const key = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+    (eventsByDate[key] ||= []).push({ ...ev, time: dt.toTimeString().slice(0,5) });
+  });
 
-        // We’ll build rows for each week
-        let currentRow = document.createElement("tr");
+  let year = new Date().getFullYear(),
+      month = new Date().getMonth();
 
-        // Fill in empty cells before the first day of the month
-        for (let i = 0; i < startDay; i++) {
-          let emptyCell = document.createElement("td");
-          emptyCell.className = "empty";
-          currentRow.appendChild(emptyCell);
-        }
+  function renderCalendar(y, m) {
+    const table = document.getElementById('calendarTable');
+    table.innerHTML = '';
+    const header = document.createElement('tr');
+    ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d => {
+      const th = document.createElement('th');
+      th.textContent = d;
+      header.appendChild(th);
+    });
+    table.appendChild(header);
 
-        // Fill in cells for each date of the month
-        for (let date = 1; date <= daysInMonth; date++) {
-          // If we’ve reached Sunday again (day 0) and it’s not the first row, start a new row
-          if ((startDay + date - 1) % 7 === 0 && date > 1) {
-            calendarTable.appendChild(currentRow);
-            currentRow = document.createElement("tr");
-          }
-          
-          let cell = document.createElement("td");
-          cell.textContent = date;
-          currentRow.appendChild(cell);
-        }
-
-        // If the last row is not complete, fill the remaining cells with empty days
-        let remainingCells = 7 - currentRow.children.length;
-        for (let i = 0; i < remainingCells; i++) {
-          let emptyCell = document.createElement("td");
-          emptyCell.className = "empty";
-          currentRow.appendChild(emptyCell);
-        }
-
-        // Append the last row
-        calendarTable.appendChild(currentRow);
+    const firstDay = new Date(y, m, 1).getDay();
+    const daysInMonth = new Date(y, m+1, 0).getDate();
+    let row = document.createElement('tr');
+    for (let i = 0; i < firstDay; i++) {
+      row.appendChild(document.createElement('td'));
+    }
+    for (let d = 1; d <= daysInMonth; d++) {
+      if ((firstDay + d - 1) % 7 === 0 && d > 1) {
+        table.appendChild(row);
+        row = document.createElement('tr');
       }
+      const td = document.createElement('td');
+      td.style.padding = '4px';
+      td.style.height = '120px';
+      const num = document.createElement('div');
+      num.style.fontWeight = 'bold';
+      num.textContent = d;
+      td.appendChild(num);
 
-      // On page load, generate the calendar for the current month
-      document.addEventListener("DOMContentLoaded", () => {
-
-        const today = new Date();
-        const thisYear = today.getFullYear();
-        const thisMonth = today.getMonth(); // 0-based
-        generateCalendar(thisYear, thisMonth);
+      const key = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      (eventsByDate[key] || []).forEach(ev => {
+        const eb = document.createElement('div');
+        eb.className = 'eventBlock';
+        eb.textContent = `${ev.time} – ${ev.eventname}`;
+        eb.onclick = () => {
+          document.getElementById('edit_event_id').value = ev.eventid;
+          document.getElementById('delete_event_id').value = ev.eventid;
+          document.getElementById('edit_name').value = ev.eventname;
+          document.getElementById('edit_category').value = ev.eventcategory;
+          document.getElementById('edit_date').value = key;
+          document.getElementById('edit_time').value = ev.time;
+          document.getElementById('edit_reminder').value = ev.eventreminderdelay || '';
+          document.getElementById('edit_description').value = ev.eventdescription;
+          document.getElementById('edit_link').value = ev.eventlink;
+          document.getElementById('edit_attendees').value = ev.eventattendees;
+          new bootstrap.Modal(document.getElementById('edit_modal')).show();
+        };
+        td.appendChild(eb);
       });
-    </script>
-</html>
+
+      row.appendChild(td);
+    }
+    while (row.children.length < 7) {
+      row.appendChild(document.createElement('td'));
+    }
+    table.appendChild(row);
+
+    document.getElementById('calendarTitle').textContent =
+      `${['January','February','March','April','May','June','July','August','September','October','November','December'][m]} ${y}`;
+  }
+
+  document.getElementById('prevMonth').onclick = () => {
+    if (--month < 0) { month = 11; year--; }
+    renderCalendar(year, month);
+  };
+  document.getElementById('nextMonth').onclick = () => {
+    if (++month > 11) { month = 0; year++; }
+    renderCalendar(year, month);
+  };
+  document.addEventListener('DOMContentLoaded', () => {
+    renderCalendar(year, month);
+  });
+</script>
