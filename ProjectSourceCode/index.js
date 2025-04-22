@@ -200,10 +200,15 @@ app.post('/calendar', async (req, res) => {
       VALUES($1,$2)
     `, [event_id, attendee]);
 
-    await db.none(`
-      INSERT INTO attendees (attendeeemail) 
-      VALUES($1)
-    `, [attendee]);
+    const user_exists = await db.any(`SELECT attendeeemail FROM attendees WHERE attendeeemail= $1`, [attendee]);
+
+
+    if(user_exists.length <0){
+      await db.none(`
+        INSERT INTO attendees (attendeeemail) 
+        VALUES($1)
+      `, [attendee]);
+    }
   }
 
   res.redirect('/calendar');
@@ -211,31 +216,38 @@ app.post('/calendar', async (req, res) => {
 
 // edit
 app.post('/calendar/edit', async (req, res) => {
-  const {
-    event_id, event_name, event_category,
-    event_date, event_time,
-    event_reminder_delay, event_description,
-    event_link, event_attendees
-  } = req.body;
-  const dt = new Date(`${event_date}T${event_time}`);
-  const sqlTs = dt.toISOString().slice(0,19).replace('T',' ');
-  await db.none(`
-    UPDATE events SET
-      eventname=$1,
-      eventcategory=$2,
-      eventdate=$3,
-      eventreminderdelay=$4,
-      eventdescription=$5,
-      eventlink=$6,
-      eventemaillist=$7
-    WHERE eventid=$8
-  `, [
-    event_name, event_category, sqlTs,
-    parseInt(event_reminder_delay,10),
-    event_description, event_link,
-    event_attendees, event_id
-  ]);
-  res.redirect('/calendar');
+  try{
+    const {
+      event_id, event_name, event_category,
+      event_date, event_time,
+      event_reminder_delay, event_description,
+      event_link, event_attendees
+    } = req.body;
+    const dt = new Date(`${event_date}T${event_time}`);
+    const sqlTs = dt.toISOString().slice(0,19).replace('T',' ');
+    await db.none(`
+      UPDATE events SET
+        eventname=$1,
+        eventcategory=$2,
+        eventdate=$3,
+        eventreminderdelay=$4,
+        eventdescription=$5,
+        eventlink=$6,
+        eventemaillist=$7
+      WHERE eventid=$8
+    `, [
+      event_name, event_category, sqlTs,
+      parseInt(event_reminder_delay,10),
+      event_description, event_link,
+      event_attendees, event_id
+    ]);
+    res.redirect('/calendar');
+
+  }catch (err) {
+    console.error('Error in /calendar/edit:', err);
+    res.status(500).send('An error occurred while updating the event.');
+  }
+
 });
 
 // delete

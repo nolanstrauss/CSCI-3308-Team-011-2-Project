@@ -53,7 +53,7 @@
   {{!-- Create Event Modal --}}
   <div class="modal fade" id="event_modal" tabindex="-1">
     <div class="modal-dialog"><div class="modal-content">
-      <form method="post" action="/calendar">
+      <form id="create_event" method="post" action="/calendar">
         <div class="modal-header">
           <h5 class="modal-title">Create a new Event!</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -67,7 +67,7 @@
           <input type="number" name="event_reminder_delay" class="form-control" min="0" required>
           <p>Description</p><textarea name="event_description" class="form-control"></textarea>
           <p>Link to Event</p><input name="event_link" class="form-control">
-          <p>Attendees (emails)</p><input name="event_attendees" class="form-control">
+          <p>Attendees (emails)</p><input name="event_attendees" id="event_attendees" class="form-control">
         </div>
         <div class="modal-footer">
           <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -82,7 +82,7 @@
     <div class="modal-dialog"><div class="modal-content">
 
       <!-- EDIT FORM -->
-      <form method="post" action="/calendar/edit">
+      <form id = "edit_event" method="post" action="/calendar/edit">
         <input type="hidden" name="event_id" id="edit_event_id">
         <div class="modal-header">
           <h5 class="modal-title">Edit Event</h5>
@@ -97,7 +97,7 @@
           <input type="number" name="event_reminder_delay" id="edit_reminder" class="form-control">
           <p>Description</p><textarea name="event_description" id="edit_description" class="form-control"></textarea>
           <p>Link to Event</p><input name="event_link" id="edit_link" class="form-control">
-          <p>Attendees (emails)</p><input name="event_attendees" id="edit_attendees" class="form-control">
+          <p>Attendees (emails)</p><input name="event_attendees" id="event_attendees" class="form-control">
         </div>
         <div class="modal-footer d-flex w-100">
           <button class="btn btn-primary me-auto" type="submit">Save Changes</button>
@@ -174,7 +174,7 @@
           document.getElementById('edit_reminder').value = ev.eventreminderdelay || '';
           document.getElementById('edit_description').value = ev.eventdescription;
           document.getElementById('edit_link').value = ev.eventlink;
-          document.getElementById('edit_attendees').value = ev.eventattendees;
+          document.getElementById('event_attendees').value = ev.eventattendees;
           new bootstrap.Modal(document.getElementById('edit_modal')).show();
         };
         td.appendChild(eb);
@@ -201,5 +201,20 @@
   };
   document.addEventListener('DOMContentLoaded', () => {
     renderCalendar(year, month);
+  });
+
+  document.addEventListener('submit', (event)=>{
+    const formID = event.target.id;
+    if(formID == 'create_event' || formID == 'edit_event'){
+      let email_list = document.getElementById('event_attendees').value;
+      let emails = email_list.split(',').filter(e => e.length > 0);
+      const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      for(const email of emails){
+        if(!regex.test(email.trim())){
+          alert("One or more of the emails you have entered are invalid!");
+          event.preventDefault()
+          return;
+      }
+    }
   });
 </script>
