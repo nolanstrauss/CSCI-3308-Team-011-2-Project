@@ -252,52 +252,105 @@ app.get('/logout', (req, res) => {
 });
 
 // Render the settings page
-app.get('/settings', auth, (req, res) => {
-  const user = req.session.currentUser[0];
-  res.render('pages/settings', { user });
+app.get('/settings', (req, res) => {
+  if (!req.session.currentUser) {
+    return res.redirect('/login'); // Redirect to login if the user is not authenticated
+  }
+
+  res.render('pages/settings', {
+    user_exists: true,
+    user: req.session.currentUser[0], // Pass the current user to the template
+  });
 });
-
-// Handle settings update
-app.post('/settings', auth, async (req, res) => {
-  const { username, email, currentPassword, newPassword } = req.body;
-  const user = req.session.currentUser[0];
-
-  // Verify current password
-  const validPassword = await bcrypt.compare(currentPassword, user.password);
-  if (!validPassword) {
-    return res.render('pages/settings', { error: true, message: 'Incorrect current password', user });
-  }
-
-  // Update user information
-  const updates = [];
-  const params = [];
-
-  if (username && username !== user.username) {
-    updates.push('username=$1');
-    params.push(username);
-  }
-
-  if (email && email !== user.email) {
-    updates.push('email=$2');
-    params.push(email);
-  }
-
-  if (newPassword) {
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    updates.push('password=$3');
-    params.push(hashedPassword);
-  }
-
-  if (updates.length > 0) {
-    const query = `UPDATE users SET ${updates.join(', ')} WHERE username=$4`;
-    params.push(user.username);
-    await db.none(query, params);
-    req.session.currentUser[0] = { ...user, username, email, password: newPassword ? hashedPassword : user.password };
-  }
-
-  res.render('pages/settings', { success: true, message: 'Settings updated successfully', user: req.session.currentUser[0] });
-});
-
+  app.post('/settings/change-username', async (req, res) => {
+    const newUsername = req.body.new_username;
+    const currentUsername = req.session.currentUser[0].username;
+  
+    try {
+      // Check if the new username already exists
+      const userExists = await db.oneOrNone('SELECT username FROM users WHERE username = $1', [newUsername]);
+      if (userExists) {
+        return res.status(400).render('pages/settings', {
+          error: true,
+          message: 'This username is already taken.',
+        });
+      }
+  
+      // Update the username
+      await db.none('UPDATE users SET username = $1 WHERE username = $2', [newUsername, currentUsername]);
+  
+      // Update session data
+      req.session.currentUser[0].username = newUsername;
+  
+      res.render('pages/settings', {
+        success: true,
+        message: 'Username updated successfully.',
+      });
+    } catch (err) {
+      console.error(err);
+      res.status(500).render('pages/settings', {
+        error: true,
+        message: 'An error occurred while updating your username.',
+      });
+    }
+  });
+  app.post('/settings/change-password', async (req, res) => {
+    const currentPassword = req.body.current_password;
+    const newPassword = req.body.new_password;
+    const currentUsername = req.session.currentUser[0].username;
+  
+    try {
+      // Get the current password hash
+      const user = await db.one('SELECT password FROM users WHERE username = $1', [currentUsername]);
+  
+      // Verify the current password
+      const match = await bcrypt.compare(currentPassword, user.password);
+      if (!match) {
+        return res.status(400).render('pages/settings', {
+          error: true,
+          message: 'Current password is incorrect.',
+        });
+      }
+  
+      // Hash the new password and update it
+      const newHash = await bcrypt.hash(newPassword, 10);
+      await db.none('UPDATE users SET password = $1 WHERE username = $2', [newHash, currentUsername]);
+  
+      res.render('pages/settings', {
+        success: true,
+        message: 'Password updated successfully.',
+      });
+    } catch (err) {
+      console.error(err);
+      res.status(500).render('pages/settings', {
+        error: true,
+        message: 'An error occurred while updating your password.',
+      });
+    }
+  });
+  app.post('/settings/delete-account', async (req, res) => {
+    const currentUsername = req.session.currentUser[0].username;
+  
+    try {
+      // Delete the user from the database
+      await db.none('DELETE FROM users WHERE username = $1', [currentUsername]);
+  
+      // Destroy the session
+      req.session.destroy();
+  
+      res.redirect('/register');
+    } catch (err) {
+      console.error(err);
+      res.status(500).render('pages/settings', {
+        error: true,
+        message: 'An error occurred while deleting your account.',
+      });
+    }
+  });
+  app.use((req, res, next) => {
+    res.locals.user = req.session.currentUser ? req.session.currentUser[0] : null;
+    next();
+  });
 
 // *****************************************************
 // <!-- Section 5 : Start Server-->
