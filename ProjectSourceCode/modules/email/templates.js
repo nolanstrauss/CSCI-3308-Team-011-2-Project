@@ -1,6 +1,6 @@
 let confirmation_email_template = (event,user_index) => {
 
-    let {user_emails,event_name,event_time,reminder_time} = event
+    let {user_emails,event_name,event_time,reminder_time,link,description} = event
     let [date,time] = formatDate(event_time);
 
     return `<div id="content">
@@ -19,8 +19,10 @@ let confirmation_email_template = (event,user_index) => {
                 <div style="margin: 15px 0;">
                     
                     <div style="border:2px solid rgba(0, 0, 0, 0.284);">
-                        <h3>${event_name}</h3>
+                        <h3>${event_name}: <a href=${link}>Link</a></h3>
                     </div>
+
+                    <p>${description}</p>
                 </div>
             </div>
         </div>`
@@ -28,7 +30,7 @@ let confirmation_email_template = (event,user_index) => {
 
 let reminder_email_template = (event,user_index) => {
 
-    let {user_emails,event_name,event_time,reminder_time} = event
+    let {user_emails,event_name,event_time,reminder_time,link,description} = event
     let [date,time] = formatDate(event_time);
     return `<div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(32, 18, 101, 0.15);">
         <div style="padding: 30px 30px 0px 30px; text-align: center;">
@@ -41,7 +43,7 @@ let reminder_email_template = (event,user_index) => {
             <div style="color: #636e72; margin-top:10px">
                 <p>📅 ${date}</p>
                 <p>⏰ ${time}</p>
-                <p>Starts in: ${reminder_time} minute ${reminder_time > 1 ? "s": ""}</p>
+                <p>Starts in: ${reminder_time} minute${reminder_time > 1 ? "s": ""}</p>
             </div>
             <div style="margin: 15px 0;">
                 

@@ -58,11 +58,13 @@ class Events {
 
 // struct to store a given event details
 class Event {
-  constructor(user_emails,event_name,event_time,reminder_time) {
+  constructor(user_emails,event_name,event_time,reminder_time,link,description) {
     this.user_emails = user_emails;
     this.event_name = event_name;
     this.event_time = event_time;
     this.reminder_time = reminder_time;
+    this.link = link
+    this.description = description
   }
 }
 
@@ -144,8 +146,8 @@ let EmailEventLoop = async() => {
 })()
 
 // public methods
-let CreateEvent = async(user_emails,event_name,event_time,reminder_time) => {
-  let event = new Event(user_emails,event_name,event_time,reminder_time);
+let CreateEvent = async(user_emails,event_name,event_time,reminder_time,link,description) => {
+  let event = new Event(user_emails,event_name,event_time,reminder_time,link,description);
   // send email
   try {
     await sendConfirmationEmail(event);
@@ -159,12 +161,12 @@ let CreateEvent = async(user_emails,event_name,event_time,reminder_time) => {
 }
 
 
-let RemoveUserFromEvent = (userEmail, eventName) => {
+let RemoveUserFromEvent = (user_email, event_name) => {
   let removed = false;
   for (let i = events.length - 1; i >= 0; i--) { //go through each event
     let event = events.get(i);
-    if (event.event_name == eventName) {
-      let index = event.user_emails.indexOf(userEmail);
+    if (event.event_name == event_name) {
+      let index = event.user_emails.indexOf(user_email);
       if (index != -1) { //if it is found, remove it
         event.user_emails.splice(index, 1);
         removed = true;
