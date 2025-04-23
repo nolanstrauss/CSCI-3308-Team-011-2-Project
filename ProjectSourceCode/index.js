@@ -206,7 +206,15 @@ app.post('/calendar', async (req, res) => {
     event_link, event_attendees
   } = req.body;
   const user = req.session.currentUser[0].username;
+
   const sqlTs = `${event_date} ${event_time}`;  // no Date() → toISOString()
+
+
+  const dt = new Date(`${event_date}T${event_time}`);
+  const sqlTs = dt.toISOString().slice(0,19).replace('T',' ');
+  attendees = event_attendees.split(',')
+  .map(email => email.trim())
+  .filter(email => email.length > 0);
 
   const { eventid } = await db.one(`
     INSERT INTO events
