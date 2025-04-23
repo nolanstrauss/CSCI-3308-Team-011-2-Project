@@ -1,0 +1,34 @@
+Minutes: 19 Minutes
+
+Decisions made:
+    Charbel: 
+    - calendar page
+    Nolan: 
+    - settings page
+    Micah
+    - email format sends to all users 
+    - integrating into calendar post route
+    Tyler:
+    - fixing register
+    - manage events pop up 
+    Caroline:
+    - fixing user options on different pages
+    - fixing unit test case
+    - fixing dropdown menu
+    Hayden:
+    - upcoming events in sequential order
+    - date and time inpts seperted in the db (one singular time stamp)
+
+Alternative actions/options discussed
+- pop up on UI when event is about to start
+- on manage invitations add feature to respond to invitations
+- update story board with what is left to do
+- make upcoming events look "fancier"
+- do RSVP and show how many people are coming to event
+
+Follow-up items, including agreed-on roles and responsibilities
+- figure out how much developement is left
+- figure out which manage events we want to use
+
+
+
