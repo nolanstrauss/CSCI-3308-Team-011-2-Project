@@ -2,6 +2,23 @@
 
 <div id="calendarContainer" class="mx-auto" style="width:80%;">
   <style>
+    /* General Styling */
+    html, body {
+      min-height: 112%;
+      margin: 0;
+      padding: 0;
+      font-family: 'Roboto', Arial, sans-serif;
+      background: linear-gradient(to bottom, #FFF, #e8d4ff); /* Light purple gradient */
+      display: flex;
+      flex-direction: column;
+    }
+    
+
+    h1 {
+      color: #6c5ce7; /* Purple heading color */
+      font-weight: bold;
+    }
+
     table#calendarTable {
       width: 100%;
       border-collapse: collapse;
@@ -18,7 +35,9 @@
       height: 120px;
       overflow: hidden;
     }
-    table#calendarTable th { background: #f2f2f2; }
+    table#calendarTable th {
+      background: #f0e2ff;
+    }
     .eventBlock {
       display: block;
       margin-top: 4px;
@@ -27,14 +46,60 @@
       font-size: 0.9rem;
       color: #fff;
       cursor: pointer;
-      background: #0d6efd;
+      background: #6c5ce7; /* Purple background */
       white-space: nowrap;
       text-overflow: ellipsis;
       overflow: hidden;
     }
-    .controls { text-align:center; margin-bottom:1rem; }
+    .controls {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
     .controls button,
-    .controls a { margin: 0 .3rem; }
+    .controls a {
+      margin: 0 .3rem;
+    }
+
+    /* Button Styling */
+    .btn-primary {
+      border: 2px solid #6c5ce7; /* Purple outline */
+      background-color: transparent;
+      color: #6c5ce7;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .btn-primary:hover {
+      background-color: #6c5ce7;
+      color: #fff;
+    }
+    .btn-secondary {
+      border: 2px solid #6c757d; /* Gray outline */
+      background-color: transparent;
+      color: #6c757d;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .btn-secondary:hover {
+      background-color: #6c757d;
+      color: #fff;
+    }
+    .btn-success {
+      border: 2px solid #28a745; /* Green outline */
+      background-color: transparent;
+      color: #28a745;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .btn-success:hover {
+      background-color: #28a745;
+      color: #fff;
+    }
+
+    /* Modal Header Styling */
+    .modal-header {
+      background-color: #6c5ce7; /* Purple background */
+      color: #fff; /* White text */
+    }
+    .modal-title {
+      font-weight: bold;
+    }
   </style>
 
   <div class="controls">
