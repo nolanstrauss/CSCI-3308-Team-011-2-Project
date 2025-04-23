@@ -1,135 +1,213 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Big Calendar</title>
-  </head>
-  <body>
-    {{!-- <div class="modal" tabindex="-1" id="event_modal">
-          <div class="modal-dialog">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title">Create a new Event!</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-              </div>
-              <div class="modal-body">
-                <div>
-                  <form method="post" action="/calendar">
+ <head>
+   <meta charset="UTF-8" />
+   <title>Big Calendar</title>
+ </head>
+ <body>
+ 
+   {{!-- <div class="modal" tabindex="-1" id="event_modal">
+         <div class="modal-dialog">
+           <div class="modal-content">
+             <div class="modal-header">
+               <h5 class="modal-title">Create a new Event!</h5>
+               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+             </div>
+             <div class="modal-body">
+               <div>
+                 <form method="post" action="/calendar">
 
-                    <p>Event Name</p>
-                    <input type="text" name="event_name" pattern=".{1+}" required/>
 
-                    <p>Category</p>
-                    <input type="text" name="event_category"/>
+                   <p>Event Name</p>
+                   <input type="text" name="event_name" pattern=".{1+}" required/>
 
-                    <p>Date</p>
-                    <input type="date" id="event_date_input" name="event_date" max="9999-12-31" required>
 
-                    <p>Time</p>
-                    <input type="time" name="event_time" required>
-                    
-                    <p>How long before would you like to be notified (in mins)?</p>
-                    <input type="number" name="event_reminder_delay" min="0" required>
-                    
-                    <p>Description</p>
-                    <textarea rows="5" cols="60" name="event_description"></textarea>
+                   <p>Category</p>
+                   <input type="text" name="event_category"/>
 
-                    <p>Link to Event</p>
-                    <input type="text" name="event_link">
-                    
-                    <p>Event Attendees (Seperate multiple emails by commas)</p>
-                    <input type="text" name="event_attendees">
 
-                    <div class="modal-footer"> 
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button class="btn btn-primary" type="submit">
-                      Create Event
-                    </button>
+                   <p>Date</p>
+                   <input type="date" id="event_date_input" name="event_date" max="9999-12-31" required>
 
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
-        </div>
-    </div>
-      <div class="row">
-          <div class="col-2">
-              <div class="custom-container">
-                <button
-                  class="btn btn-primary mt-3"
-                  data-bs-toggle="modal"
-                  data-bs-target="#event_modal" 
-                >
-                  Create Event
-                </button>
-              </div>
-          </div>
-      </div>
-      <hr/> --}}
-      <h3>Upcoming events: </h3>
-      <table>
-        <style>
-          table {
-            width: 100%;
-            border-collapse: collapse;
-            font-family: Arial, sans-serif;
-            font-size: 1.1rem;
-          }
 
-          th, td {
-            border: 1px solid #ccc;
-            text-align: center;
-            height: 3rem;
-          }
-        </style>
-        <tr>
-        <td>
-          
-        </td>
-        <td>
-          Event Name  
-        </td>
-        <td>
-          Event Date  
-        </td>
-        <td>
-          Event Time  
-        </td>
-        <td style="text-align: left; width: 20px;">
-          Event Description  
-        </td>
-        <td>
+                   <p>Time</p>
+                   <input type="time" name="event_time" required>
+                  
+                   <p>How long before would you like to be notified (in mins)?</p>
+                   <input type="number" name="event_reminder_delay" min="0" required>
+                  
+                   <p>Description</p>
+                   <textarea rows="5" cols="60" name="event_description"></textarea>
 
-        </td>
-        </tr>
 
-        {{#each events}}
-        <tr>
-          <td>
-            {{inc @index}}
-          </td>
-          <td>
-            {{this.eventname}}
-          </td>
-          <td>
-            {{date this.eventdate}}
-          </td>
-          <td>
-            {{time this.eventdate}}
-          </td>
-          <td style="text-align: left; width: 40%">
-            {{this.eventdescription}}
-          </td>
-          <td>
-            <form method="post" action="/calendar/delete">
-                <input type="submit" value="Delete"/>
-                <input type="hidden" name="event_id" value="{{this.eventid}}"/>
-            </form> 
-          </td>
-        </tr>
-        {{/each}}
-      </table>
-  </body>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+                   <p>Link to Event</p>
+                   <input type="text" name="event_link">
+                  
+                   <p>Event Attendees (Seperate multiple emails by commas)</p>
+                   <input type="text" name="event_attendees">
+
+
+                   <div class="modal-footer">
+                   <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                   <button class="btn btn-primary" type="submit">
+                     Create Event
+                   </button>
+
+
+                 </div>
+               </form>
+             </div>
+           </div>
+         </div>
+       </div>
+   </div>
+     <div class="row">
+         <div class="col-2">
+             <div class="custom-container">
+               <button
+                 class="btn btn-primary mt-3"
+                 data-bs-toggle="modal"
+                 data-bs-target="#event_modal"
+               >
+                 Create Event
+               </button>
+             </div>
+         </div>
+     </div>
+     <hr/> --}}
+     <h3>Upcoming events: </h3>
+     <table>
+       <style>
+ html, body {
+   min-height: 100%;
+   margin: 0;
+   padding: 0;
+   font-family: 'Roboto', Arial, sans-serif;
+   background: linear-gradient(to bottom, #FFF, #e8d4ff); /* Light purple gradient */
+   display: flex;
+   flex-direction: column;
+ }
+
+
+ h3 {
+   color: #6c5ce7; /* Purple heading color */
+   font-weight: bold;
+   text-align: center;
+   margin-top: 1rem;
+ }
+
+
+ table {
+   width: 90%;
+   border-collapse: collapse;
+   font-family: Arial, sans-serif;
+   font-size: 1.1rem;
+   margin: 1rem auto;
+   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* Purple gradient background */
+   color: #fff; /* White text for contrast */
+   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+   border-radius: 8px;
+   overflow: hidden;
+ }
+
+
+ th, td {
+   border: 1px solid rgba(255, 255, 255, 0.2); /* Semi-transparent border for a subtle effect */
+   text-align: center;
+   padding: 8px;
+   height: 3rem;
+   background: transparent; /* Make cells transparent to show the gradient */
+ }
+
+
+ th {
+   font-weight: bold;
+   text-transform: uppercase;
+ }
+
+
+ td:first-child, th:first-child {
+   width: 5%;
+ }
+
+
+ td:last-child, th:last-child {
+   width: 20%;
+ }
+
+
+ .btn {
+   padding: 6px 12px;
+   font-size: 0.9rem;
+   border-radius: 4px;
+   text-transform: uppercase;
+   font-weight: bold;
+   cursor: pointer;
+   transition: background-color 0.3s, color 0.3s;
+ }
+
+
+ .btn-success {
+   border: 2px solid #28a745; /* Green outline */
+   background-color: transparent;
+   color: #28a745;
+ }
+
+
+ .btn-success:hover {
+   background-color: #28a745;
+   color: #fff;
+ }
+
+
+ .btn-danger {
+   border: 2px solid #b24440; /* Red outline */
+   background-color: #d9534f; /* Red background */
+   color: #fff; /* White text */
+   transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+ }
+
+
+ .btn-danger:hover {
+   background-color: #ff7e7e; /* White background */
+   color: #ffffff; /* Red text */
+   border: 2px solid #d9534f; /* Red outline */
+  
+ }
+
+
+</style>
+      <tr>
+       <td>#</td>
+       <td>Event Name</td>
+       <td>Event Date</td>
+       <td>Event Time</td>
+       <td style="text-align: left; width: 40%">Event Description</td>
+       <td>Attendees</td> <!-- New Attendees Column -->
+       <td>Manage Event</td>
+     </tr>
+
+
+       {{#each events}}
+       <tr>
+         <td>{{inc @index}}</td>
+         <td>{{this.eventname}}</td>
+         <td>{{date this.eventdate}}</td>
+         <td>{{time this.eventdate}}</td>
+         <td style="text-align: left; width: 40%">{{this.eventdescription}}</td>
+         <td>{{this.eventemaillist}}</td> <!-- Display Attendees -->
+         <td>
+           <form method="post" action="/calendar/delete" style="display: inline;">
+             <button type="submit" class="btn btn-danger">Delete</button>
+             <input type="hidden" name="event_id" value="{{this.eventid}}" />
+           </form>
+         </td>
+       </tr>
+     {{/each}}
+     </table>
+ </body>
+ <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 </html>
+
+
+

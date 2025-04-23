@@ -135,7 +135,7 @@ app.get('/manage-invitations', async (req, res) =>
   {
     const username = req.session.currentUser[0].username;
     console.log(username);
-    var query = `SELECT eventName, eventCategory, eventDate, eventDescription, eventID FROM events WHERE eventUser = '${username}' ORDER BY eventDate;`;
+    var query = `SELECT eventName, eventCategory, eventDate, eventDescription, eventemaillist, eventID FROM events WHERE eventUser = '${username}' ORDER BY eventDate;`;
     results = [];
     try 
     {
