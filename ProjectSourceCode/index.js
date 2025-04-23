@@ -234,16 +234,28 @@ app.post('/calendar', async (req, res) => {
   try {
     for (const attendee of attendees) 
       {
-        await db.none(`
-          INSERT INTO events_to_attendees (eventid,attendeeemail,rsvp)
-          VALUES($1,$2,$3)
-        `, [eventid, attendee,"p"]);
-    
-        await db.none(`
-          INSERT INTO attendees (attendeeemail) 
-          VALUES($1)
+
+        const attendeeExists = await db.oneOrNone(`
+          SELECT attendeeemail FROM attendees WHERE attendeeemail = $1
         `, [attendee]);
-    
+        if (attendeeExists==null) {
+          await db.none(`
+            INSERT INTO attendees (attendeeemail) 
+            VALUES($1)
+          `, [attendee]);
+        }
+
+        const attendeeInEvent = await db.oneOrNone(` 
+          SELECT attendeeemail FROM events_to_attendees WHERE attendeeemail =$1
+          `, [attendee]);
+
+        if(attendeeInEvent==null){
+          await db.none(`
+            INSERT INTO events_to_attendees (eventid,attendeeemail,rsvp)
+            VALUES($1,$2,$3)
+          `, [eventid, attendee,"p"]);
+        }
+
         console.log(attendee);
       }
   } catch (e) {
