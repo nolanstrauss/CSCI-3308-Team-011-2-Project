@@ -13,6 +13,7 @@ const bodyParser = require('body-parser');
 const session = require('express-session');
 const bcrypt = require('bcryptjs');
 const { createEvents } = require('ics');
+const {CreateEvent,RemoveUserFromEvent} = require("./modules/email/email")
 
 // *****************************************************
 // <!-- Section 2 : Connect to DB -->
@@ -227,7 +228,7 @@ app.post('/calendar', async (req, res) => {
   `, [user, eventid]);
 
   //seperate the event email list by commas and add each value into the attendees db
-  const attendees = event_attendees.replace(" ", "").split(',');
+  let attendees = event_attendees.replace(" ", "").split(',');
 
 
   try {
@@ -236,7 +237,7 @@ app.post('/calendar', async (req, res) => {
         await db.none(`
           INSERT INTO events_to_attendees (eventid,attendeeemail,rsvp)
           VALUES($1,$2,$3)
-        `, [event_id, attendee,"p"]);
+        `, [eventid, attendee,"p"]);
     
         await db.none(`
           INSERT INTO attendees (attendeeemail) 
@@ -248,6 +249,18 @@ app.post('/calendar', async (req, res) => {
   } catch (e) {
     console.log("error creating event:" + e);
   }
+
+
+  //link email module
+  const eventDateTime = new Date(`${event_date}T${event_time}`).getTime();
+CreateEvent(
+  event_attendees.split(',').map(e => e.trim()).push(user), 
+  event_name,
+  eventDateTime, 
+  parseInt(event_reminder_delay, 10),
+  event_link,
+  event_description
+);
   res.redirect('/calendar');
 });
 
