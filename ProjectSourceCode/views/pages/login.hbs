@@ -1,193 +1,218 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- filepath: /ProjectSourceCode/views/pages/login.hbs -->
-  <div id="loginMessage"></div>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Login Page with Navbar</title>
-  <!-- Bootstrap CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    /* General Body Styling */
-    body {
-      background-color: #f0f0f0;
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-    }
+ <!-- filepath: /ProjectSourceCode/views/pages/login.hbs -->
+ <div id="loginMessage"></div>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1">
+ <title>Login Page with Navbar</title>
+ <!-- Bootstrap CSS -->
+ <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+ <style>
+   /* General Body Styling */
+   html,body {
+     height: 100%; /* Ensure the background covers the full viewport height */
+     margin: 0;
+     padding: 0;
+     font-family: Arial, sans-serif;
+     background: linear-gradient(to bottom, #FFF, #e8d4ff); /* Light gradient */
+   }
 
-    /* Header styling if needed */
-    header {
-      /* The header will take its natural height */
-    }
 
-    /* Main content takes full height minus the nav bar height */
-    main {
-      min-height: calc(100vh - 70px); /* Adjust 70px if your header is taller */
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
+   /* Header styling if needed */
+   header {
+   }
 
-    /* Styling for the login container */
-    .login-container {
-      background-color: #fff;
-      padding: 20px 30px;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      width: 300px;
-      text-align: center;
-    }
 
-    .login-container h1 {
-      margin-bottom: 20px;
-      font-size: 28px;
-    }
+   /* Main content takes full height minus the nav bar height */
+   main {
+     min-height: calc(100vh - 100px); /* Adjust 70px if your header is taller */
+     display: flex;
+     justify-content: center;
+     align-items: center;
+   }
 
-    /* Style each form field container */
-    form div {
-      margin-bottom: 15px;
-      text-align: left;
-    }
 
-    label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: bold;
-    }
+   /* Styling for the login container */
+   .login-container {
+     background-color: #fff;
+     padding: 20px 30px;
+     border-radius: 8px;
+     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+     width: 300px;
+     text-align: center;
+   }
 
-    /* Input fields styling */
-    input[type="text"],
-    input[type="password"] {
-      width: 100%;
-      padding: 10px;
-      font-size: 16px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      box-sizing: border-box;
-    }
 
-    /* Login button styling */
-    button#loginButton {
-      width: 100%;
-      padding: 10px;
-      font-size: 18px;
-      border: none;
-      border-radius: 4px;
-      background-color: #007BFF;
-      color: #fff;
-      cursor: pointer;
-      transition: background-color 0.3s;
-      position: relative; /* helpful for repositioning on hover if needed */
-    }
+   .login-container h1 {
+     margin-bottom: 20px;
+     font-size: 28px;
+   }
 
-    button#loginButton:hover {
-      background-color: #0056b3;
-    }
 
-    /* Custom styling for nav items with boxes */
-    .custom-box {
-      border: 1px solid #ccc;
-      padding: 5px 10px;
-      border-radius: 5px;
-      display: inline-flex;
-      align-items: center;
-      min-height: 40px;
-    }
-    .custom-box .nav-link {
-      margin: 0;
-    }
-    #loginMessage {
-      text-align: center;
-      margin-bottom: 15px;
-      font-size: 40px;
-      color: red;
-    }
-  </style>
+   /* Style each form field container */
+   form div {
+     margin-bottom: 15px;
+     text-align: left;
+   }
+
+
+   label {
+     display: block;
+     margin-bottom: 5px;
+     font-weight: bold;
+   }
+
+
+   /* Input fields styling */
+   input[type="text"],
+   input[type="email"],
+   input[type="password"] {
+     width: 100%;
+     padding: 10px;
+     font-size: 16px;
+     border: 1px solid #ccc;
+     border-radius: 4px;
+     box-sizing: border-box;
+   }
+
+
+   /* Login button styling */
+   button#loginButton {
+       width: 100%;
+       padding: 10px;
+       font-size: 18px;
+       border: 2px solid #6c5ce7; /* Outline with a purple border */
+       border-radius: 4px;
+       background-color: transparent; /* Transparent background */
+       color: #6c5ce7; /* Purple text color */
+       cursor: pointer;
+       transition: background-color 0.3s, color 0.3s;
+   }
+
+
+   button#loginButton:hover {
+       background-color: #6c5ce7; /* Pale darkish purple background */
+       color: #fff; /* White text color */
+           }
+
+
+   /* Custom styling for nav items with boxes */
+   .custom-box {
+     border: 1px solid #ccc;
+     padding: 5px 10px;
+     border-radius: 5px;
+     display: inline-flex;
+     align-items: center;
+     min-height: 40px;
+   }
+   .custom-box .nav-link {
+     margin: 0;
+   }
+   #loginMessage {
+     text-align: center;
+     margin-bottom: 15px;
+     font-size: 40px;
+     color: red;
+   }
+ </style>
 </head>
 <body>
 
 
-  <!-- Centered Login Form -->
-  <main>
-    <div class="login-container">
-      <h1>Login</h1>
-      <form id="loginForm" method="POST" action="/login">
-        <div>
-          <label for="username">Username:</label>
-          <input type="text" id="username" name="username" />
-        </div>
-        <div>
-          <label for="password">Password:</label>
-          <input type="password" id="password" name="password" />
-        </div>
-        <!-- The tricky button! -->
-        <button id="loginButton" type="submit">Login</button>
-      </form>
-    </div>
-  </main>
 
-  <!-- Bootstrap JS (with Popper) -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script>
-    const loginButton = document.getElementById('loginButton');
-    const usernameInput = document.getElementById('username');
-    const passwordInput = document.getElementById('password');
 
-    window.addEventListener('load', () => {
-      setTimeout(() => {
-        console.log('After delay, Username:', usernameInput.value);
-      }, 500); // delay 500ms to let auto-fill finish
-    });
+ <!-- Centered Login Form -->
+ <main>
+   <div class="login-container">
+     <h1>Login</h1>
+     <form id="loginForm" method="POST" action="/login">
+       <div>
+         <label for="username">Username:</label>
+         <input type="email" id="username" name="username" />
+       </div>
+       <div>
+         <label for="password">Password:</label>
+         <input type="password" id="password" name="password" />
+       </div>
+       <!-- The tricky button! -->
+       <button id="loginButton" type="submit">Login</button>
+     </form>
+     <p style="margin-top: 15px; font-size: 14px; font-family: 'Arial', sans-serif; color: #a29bfe;">
+ Don't have an account? <a href="/register" style="color: #6c5ce7; text-decoration: underline;">Register here</a>
+</p>
+   </div>
+ </main>
 
-    // Helper function to check if both username and password are filled out
-    function isFormValid() {
-      console.log('Username:', usernameInput.value, 'Password:', passwordInput.value);
-      return usernameInput.value.trim() !== '' && passwordInput.value.trim() !== '';
-    }
 
-    // If the user hovers over the button and the form is not valid,
-    // move the button to a random position on the screen.
-    loginButton.addEventListener('mouseover', (event) => {
-      if (!isFormValid()) {
-        const maxX = window.innerWidth - loginButton.offsetWidth;
-        const maxY = window.innerHeight - loginButton.offsetHeight;
-        // Generate random positions
-        const randomX = Math.floor(Math.random() * maxX);
-        const randomY = Math.floor(Math.random() * maxY);
-        // Position the button absolutely
-        loginButton.style.position = 'absolute';
-        loginButton.style.left = `${randomX}px`;
-        loginButton.style.top = `${randomY}px`;
-      }
-    });
+ <!-- Bootstrap JS (with Popper) -->
+ <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+ <script>
+   const loginButton = document.getElementById('loginButton');
+   const usernameInput = document.getElementById('username');
+   const passwordInput = document.getElementById('password');
+
+
+   window.addEventListener('load', () => {
+     setTimeout(() => {
+       console.log('After delay, Username:', usernameInput.value);
+     }, 500); // delay 500ms to let auto-fill finish
+   });
+
+
+   // Helper function to check if both username and password are filled out
+   function isFormValid() {
+     console.log('Username:', usernameInput.value, 'Password:', passwordInput.value);
+     return usernameInput.value.trim() !== '' && passwordInput.value.trim() !== '';
+   }
+
+
+   // If the user hovers over the button and the form is not valid,
+   // move the button to a random position on the screen.
+   loginButton.addEventListener('mouseover', (event) => {
+     if (!isFormValid()) {
+       const maxX = window.innerWidth - loginButton.offsetWidth;
+       const maxY = window.innerHeight - loginButton.offsetHeight;
+       // Generate random positions
+       const randomX = Math.floor(Math.random() * maxX);
+       const randomY = Math.floor(Math.random() * maxY);
+       // Position the button absolutely
+       loginButton.style.position = 'absolute';
+       loginButton.style.left = `${randomX}px`;
+       loginButton.style.top = `${randomY}px`;
+     }
+   });
+
 
 // Prevent form submission if the fields are not filled
 // Store the original width in a variable outside the event listener
 let originalButtonWidth = loginButton.offsetWidth;
 
+
 loginButton.addEventListener('mouseover', (event) => {
-  if (!isFormValid()) {
-    event.preventDefault();
-    const messageEl = document.getElementById('loginMessage');
-    if (messageEl) {
-      messageEl.innerText = "Please enter login information before logging in!";
-    }
+ if (!isFormValid()) {
+   event.preventDefault();
+   const messageEl = document.getElementById('loginMessage');
+   if (messageEl) {
+     messageEl.innerText = "Please enter login information before logging in!";
+   }
 
-    // Apply the stored, original width instead of recalculating on mouseover
-    loginButton.style.width = `${originalButtonWidth}px`;
 
-    const maxX = window.innerWidth - loginButton.offsetWidth;
-    const maxY = window.innerHeight - loginButton.offsetHeight;
-    const randomX = Math.floor(Math.random() * maxX);
-    const randomY = Math.floor(Math.random() * maxY);
-    loginButton.style.position = 'absolute';
-    loginButton.style.left = `${randomX}px`;
-    loginButton.style.top = `${randomY}px`;
-  }
+   // Apply the stored, original width instead of recalculating on mouseover
+   loginButton.style.width = `${originalButtonWidth}px`;
+
+
+   const maxX = window.innerWidth - loginButton.offsetWidth;
+   const maxY = window.innerHeight - loginButton.offsetHeight;
+   const randomX = Math.floor(Math.random() * maxX);
+   const randomY = Math.floor(Math.random() * maxY);
+   loginButton.style.position = 'absolute';
+   loginButton.style.left = `${randomX}px`;
+   loginButton.style.top = `${randomY}px`;
+ }
 });
 
-  </script>
+
+ </script>
 </body>
 </html>

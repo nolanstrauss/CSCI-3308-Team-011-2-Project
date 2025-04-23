@@ -1,9 +1,24 @@
-
-
 <h1 id="calendarTitle" class="text-center my-4">Loading Calendar...</h1>
 
 <div id="calendarContainer" class="mx-auto" style="width:80%;">
   <style>
+    /* General Styling */
+    html, body {
+      min-height: 112%;
+      margin: 0;
+      padding: 0;
+      font-family: 'Roboto', Arial, sans-serif;
+      background: linear-gradient(to bottom, #FFF, #e8d4ff); /* Light purple gradient */
+      display: flex;
+      flex-direction: column;
+    }
+    
+
+    h1 {
+      color: #6c5ce7; /* Purple heading color */
+      font-weight: bold;
+    }
+
     table#calendarTable {
       width: 100%;
       border-collapse: collapse;
@@ -20,7 +35,9 @@
       height: 120px;
       overflow: hidden;
     }
-    table#calendarTable th { background: #f2f2f2; }
+    table#calendarTable th {
+      background: #f0e2ff;
+    }
     .eventBlock {
       display: block;
       margin-top: 4px;
@@ -29,14 +46,60 @@
       font-size: 0.9rem;
       color: #fff;
       cursor: pointer;
-      background: #0d6efd;
+      background: #6c5ce7; /* Purple background */
       white-space: nowrap;
       text-overflow: ellipsis;
       overflow: hidden;
     }
-    .controls { text-align:center; margin-bottom:1rem; }
+    .controls {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
     .controls button,
-    .controls a { margin: 0 .3rem; }
+    .controls a {
+      margin: 0 .3rem;
+    }
+
+    /* Button Styling */
+    .btn-primary {
+      border: 2px solid #6c5ce7; /* Purple outline */
+      background-color: transparent;
+      color: #6c5ce7;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .btn-primary:hover {
+      background-color: #6c5ce7;
+      color: #fff;
+    }
+    .btn-secondary {
+      border: 2px solid #6c757d; /* Gray outline */
+      background-color: transparent;
+      color: #6c757d;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .btn-secondary:hover {
+      background-color: #6c757d;
+      color: #fff;
+    }
+    .btn-success {
+      border: 2px solid #28a745; /* Green outline */
+      background-color: transparent;
+      color: #28a745;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .btn-success:hover {
+      background-color: #28a745;
+      color: #fff;
+    }
+
+    /* Modal Header Styling */
+    .modal-header {
+      background-color: #6c5ce7; /* Purple background */
+      color: #fff; /* White text */
+    }
+    .modal-title {
+      font-weight: bold;
+    }
   </style>
 
   <div class="controls">
@@ -63,8 +126,7 @@
           <p>Category</p><input name="event_category" class="form-control">
           <p>Date</p><input type="date" name="event_date" class="form-control" required>
           <p>Time</p><input type="time" name="event_time" class="form-control" required>
-          <p>Reminder (mins before)</p>
-          <input type="number" name="event_reminder_delay" class="form-control" min="0" required>
+          <p>Reminder (mins before)</p><input type="number" name="event_reminder_delay" class="form-control" min="0" required>
           <p>Description</p><textarea name="event_description" class="form-control"></textarea>
           <p>Link to Event</p><input name="event_link" class="form-control">
           <p>Attendees (emails)</p><input name="event_attendees" id="event_attendees" class="form-control">
@@ -93,8 +155,7 @@
           <p>Category</p><input name="event_category" id="edit_category" class="form-control">
           <p>Date</p><input type="date" name="event_date" id="edit_date" class="form-control">
           <p>Time</p><input type="time" name="event_time" id="edit_time" class="form-control">
-          <p>Reminder (mins before)</p>
-          <input type="number" name="event_reminder_delay" id="edit_reminder" class="form-control">
+          <p>Reminder (mins before)</p><input type="number" name="event_reminder_delay" id="edit_reminder" class="form-control">
           <p>Description</p><textarea name="event_description" id="edit_description" class="form-control"></textarea>
           <p>Link to Event</p><input name="event_link" id="edit_link" class="form-control">
           <p>Attendees (emails)</p>
@@ -143,9 +204,7 @@
     const firstDay = new Date(y, m, 1).getDay();
     const daysInMonth = new Date(y, m+1, 0).getDate();
     let row = document.createElement('tr');
-    for (let i = 0; i < firstDay; i++) {
-      row.appendChild(document.createElement('td'));
-    }
+    for (let i = 0; i < firstDay; i++) row.appendChild(document.createElement('td'));
     for (let d = 1; d <= daysInMonth; d++) {
       if ((firstDay + d - 1) % 7 === 0 && d > 1) {
         table.appendChild(row);
@@ -177,6 +236,7 @@
           document.getElementById('edit_description').value = ev.eventdescription;
           document.getElementById('edit_link').value = ev.eventlink;
           document.getElementById('new_event_attendees').value = ev.eventattendees;
+
           new bootstrap.Modal(document.getElementById('edit_modal')).show();
         };
         td.appendChild(eb);
@@ -184,9 +244,7 @@
 
       row.appendChild(td);
     }
-    while (row.children.length < 7) {
-      row.appendChild(document.createElement('td'));
-    }
+    while (row.children.length < 7) row.appendChild(document.createElement('td'));
     table.appendChild(row);
 
     document.getElementById('calendarTitle').textContent =
@@ -201,7 +259,8 @@
     if (++month > 11) { month = 0; year++; }
     renderCalendar(year, month);
   };
-  document.addEventListener('DOMContentLoaded', () => {
+
+document.addEventListener('DOMContentLoaded', () => {
     renderCalendar(year, month);
   });
 
@@ -273,6 +332,7 @@ document.addEventListener('submit', async (event) => {
 
 
 });
+
 
 
 </script>

@@ -1,5 +1,26 @@
-<div class="container">
-    {{> message}}
-    <h1>Logout Successful</h1>
-    <p>You have been successfully logged out.</p>
+{{!-- views/pages/welcome.hbs --}}
+<style>
+  .welcome-page {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .welcome-page .content {
+    color: #fff;
+    max-width: 500px;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  }
+</style>
+
+<div class="welcome-page">
+  <div class="content text-center">
+    <h1 class="display-3 mb-3">Thank You for using TimeBridge Calendar!</h1>
+    <p class="lead mb-4">We hope to see you again soon.</p>
+    <div class="d-flex justify-content-center gap-3">
+      <a href="/login" class="btn btn-light btn-lg">Login</a>
+      <a href="/register" class="btn btn-outline-light btn-lg">Register</a>
+    </div>
+  </div>
 </div>

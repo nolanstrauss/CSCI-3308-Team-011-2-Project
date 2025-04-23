@@ -1,0 +1,15 @@
+<div style="text-align:center;">
+    <h1>Hello {username}</h1>
+    <p>Will you be going to the event: {event name}?</p>
+
+    <form action="/rsvp/{{event_id}}" method="post">
+        <select name="options" id="drop_down">
+            <option value="maybe">Maybe</option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+        </select>
+
+        <button>submit</button>
+    </form>
+    
+</div>

@@ -1,15 +1,18 @@
-
+<!DOCTYPE html>
 <html lang="en" class="h-100">
-  <head>
-    {{> head}}
-  </head>
-  <body class="h-100 d-flex flex-column">
+<head>
+  {{> head}}
+</head>
+<body class="h-100 d-flex flex-column">
+  {{!-- only show nav if hideNav is not true --}}
+  {{#unless hideNav}}
     {{> nav}}
+  {{/unless}}
 
-    <main class="flex-grow-1">
-      {{{body}}}
-    </main>
+  <main class="flex-fill">
+    {{{body}}}
+  </main>
 
-    {{> footer}}
-
-
+  {{> footer}}
+</body>
+</html>
