@@ -197,18 +197,22 @@ app.post('/calendar', async (req, res) => {
   for (const attendee of attendees) {
 
     const user_exists = await db.any(`SELECT attendeeemail FROM attendees WHERE attendeeemail= $1`, [attendee]);
-    if(user_exists.length <0){
+    if(user_exists.length <1){
       await db.none(`
         INSERT INTO attendees (attendeeemail) 
         VALUES($1)
       `, [attendee]);
+      console.log("inserted", attendee);
     }
 
     const attendee_exists = await db.any('SELECT attendeeemail FROM events_to_attendees WHERE eventid=$1 AND attendeeemail=$2', [event_id, attendee]);
-    await db.none(`
-      INSERT INTO events_to_attendees (eventid,attendeeemail)
-      VALUES($1,$2)
-    `, [event_id, attendee]);
+    if(attendee_exists.length<1){
+      await db.none(`
+        INSERT INTO events_to_attendees (eventid,attendeeemail)
+        VALUES($1,$2)
+      `, [event_id, attendee]);
+      console.log('inserted2', attendee);
+    }
   }
 
   res.redirect('/calendar');
@@ -241,7 +245,6 @@ app.post('/calendar/edit', async (req, res) => {
       event_description, event_link,
       event_attendees, event_id
     ]);
-
     res.redirect('/calendar');
 
   }catch (err) {

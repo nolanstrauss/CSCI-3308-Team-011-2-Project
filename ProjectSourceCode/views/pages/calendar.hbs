@@ -98,7 +98,7 @@
           <p>Description</p><textarea name="event_description" id="edit_description" class="form-control"></textarea>
           <p>Link to Event</p><input name="event_link" id="edit_link" class="form-control">
           <p>Attendees (emails)</p>
-          <input name="event_attendees" id="event_attendees" class="form-control">        </div>
+          <input name="new_event_attendees" id="new_event_attendees" class="form-control">        </div>
         <div class="modal-footer d-flex w-100">
           <button class="btn btn-primary me-auto" type="submit">Save Changes</button>
           <button class="btn btn-secondary mx-2" data-bs-dismiss="modal">Close</button>
@@ -205,20 +205,28 @@
 
   document.addEventListener('submit', (event)=>{
     const formID = event.target.id;
-    console.log('in listener');
-    if(formID == 'create_event' || formID == 'edit_event'){
-      let email_list = document.getElementById('event_attendees').value;
-      let emails = email_list.split(',').filter(e => e.length > 0);
-      const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-      for(const email of emails){
-        console.log(email.trim());
-        if(!regex.test(email.trim())){
-          console.log("is valid");
-          alert("One or more of the emails you have entered are invalid!");
-          event.preventDefault()
-          return;
-        }
-      }
+    var email_list = '';
+    //get the value entered and all currently stored in connection to the db, compare and delet ones not in current
+    if(formID=='create_event'){
+      email_list = document.getElementById('event_attendees').value; 
     }
+    else if(formID =='edit_event'){
+      email_list = document.getElementById('new_event_attendees').value;
+    }
+    else{
+      return;
+    }
+    let emails = email_list.split(',').filter(e => e.length > 0);
+    alert(emails);
+    const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    for(const email of emails){
+      if(!regex.test(email)){
+        console.log("One or more of the emails you have entered are invalid!");
+        event.preventDefault()
+        return;
+      }
+      //what do we want to do instead- compare to events listed for current event, if there are any that are not the same in the original, delete those from the table
+    }
+  
   });
 </script>
