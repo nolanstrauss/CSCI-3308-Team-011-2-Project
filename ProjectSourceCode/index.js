@@ -175,6 +175,11 @@ app.get('/manage-invitations', async (req, res) =>
     }
   });
 
+//add route for GET/invitations that redirects to manage-invitations
+app.get('/invitations', async (req, res) => {
+  res.redirect('/manage-invitations');
+});
+
 // ICS export (unchanged)
 app.get('/calendar/ics', async (req, res) => {
   const user = req.session.currentUser[0].username;
