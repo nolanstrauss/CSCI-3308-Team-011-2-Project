@@ -180,4 +180,16 @@ let RemoveUserFromEvent = (user_email, event_name) => {
 };
 
 
-module.exports = {CreateEvent,RemoveUserFromEvent}
+let ChangeEventTime = (user_email, event_name, new_event_time) => {
+  new_event_time = new Date(new_event_time);
+  let updated = false;
+  for (let i = events.length - 1; i >= 0; i--) {
+    let event = events.get(i);
+    if (event.event_name === event_name && event.user_emails.includes(user_email)) {
+      event.event_time = new_event_time;
+      updated = true;
+    }
+  }
+  return updated;
+};
+module.exports = {CreateEvent, RemoveUserFromEvent, ChangeEventTime};

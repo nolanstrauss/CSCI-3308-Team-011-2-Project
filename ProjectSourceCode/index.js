@@ -13,7 +13,7 @@ const bodyParser = require('body-parser');
 const session = require('express-session');
 const bcrypt = require('bcryptjs');
 const { createEvents } = require('ics');
-const {CreateEvent,RemoveUserFromEvent} = require("./modules/email/email")
+let {CreateEvent, RemoveUserFromEvent, ChangeEventTime} = require("./modules/email/email");
 
 // *****************************************************
 // <!-- Section 2 : Connect to DB -->
@@ -223,25 +223,19 @@ app.post('/calendar', async (req, res) => {
     event_name, event_category, sqlTs,
     parseInt(event_reminder_delay,10),
     event_description, event_link,
-    user, attendees.join(',')
+    user, event_attendees
   ]);
-
-
-  //getting emaillist from db which is basically just event_attendees variable from body
-  const attenders = await db.any(
-    `SELECT eventemaillist FROM events WHERE eventid =$1`, [event_result.eventid]
-  );
-
-  const event_id = event_result.eventid;
+  
 
   // associate with user
-
   await db.none(`
     INSERT INTO users_to_events(username,eventid)
     VALUES($1,$2)
-
-
   `, [user, eventid]);
+
+  
+
+
 
   //seperate the event email list by commas and add each value into the attendees db
   let attendees = event_attendees.replace(" ", "").split(',');
@@ -271,22 +265,34 @@ app.post('/calendar', async (req, res) => {
   } catch (e) {
     console.log("error creating event:" + e);
   }
+  attendees = (event_attendees || '')
+  .split(',')
+  .map(email => email.trim())
+  .filter(email => email.length > 0);
+
+// … later, when building the full list including yourself:
+let email_list = attendees.length > 0
+  ? [...new Set([...attendees, user])]     // remove duplicates
+  : [ user ];                              // if no attendees entered, just you
 
 
-  //link email module
-  const eventDateTime = new Date(`${event_date}T${event_time}`).getTime();
-CreateEvent(
-  event_attendees.split(',').map(e => e.trim()).push(user), 
-  event_name,
-  eventDateTime, 
-  parseInt(event_reminder_delay, 10),
-  event_link,
-  event_description
-);
+  try {
+    const eventDateTime = new Date(`${event_date}T${event_time}`).getTime();
+  CreateEvent(
+    email_list, // array of emails
+    event_name,
+    eventDateTime, // timestamp
+    parseInt(event_reminder_delay, 10), // minutes
+    event_link,
+    event_description
+  );
+  } catch(e) {
+    console.log("could not send email:" + e)
+  }
+
+
   res.redirect('/calendar');
 });
-
-
 
 app.get('/rsvp', async (req, res) => 
 {
@@ -384,82 +390,32 @@ app.post('/rsvp', async (req, res) =>
 
 // === UPDATED EDIT handler ===
 app.post('/calendar/edit', async (req, res) => {
-  try{
-    const {
-      event_id, event_name, event_category,
-      event_date, event_time,
-      event_reminder_delay, event_description,
-      event_link, new_event_attendees
-    } = req.body;
-    const dt = new Date(`${event_date}T${event_time}`);
-    const sqlTs = dt.toISOString().slice(0,19).replace('T',' ');
-    
-    let new_attendees = new_event_attendees.split(',')
-    .map(email => email.trim())
-    .filter(email=>email.length>0);
-    
-    
-    await db.none(`
-      UPDATE events SET
-        eventname=$1,
-        eventcategory=$2,
-        eventdate=$3,
-        eventreminderdelay=$4,
-        eventdescription=$5,
-        eventlink=$6,
-        eventemaillist=$7
-      WHERE eventid=$8
-    `, [
-      event_name, event_category, sqlTs,
-      parseInt(event_reminder_delay,10),
-      event_description, event_link,
-      new_attendees.join(','), event_id
-    ]);
+  const {
+    event_id, event_name, event_category,
+    event_date, event_time,
+    event_reminder_delay, event_description,
+    event_link, event_attendees
+  } = req.body;
+  const sqlTs = `${event_date} ${event_time}`;  // no Date() → toISOString()
 
-    let current_attendees = await db.any(
-      `SELECT attendeeemail FROM events_to_attendees where eventid = $1`, 
-      [event_id]
-    );
-    let current_emails = current_attendees.map(a=> a.attendeeemail);
+  await db.none(`
+    UPDATE events SET
+      eventname=$1,
+      eventcategory=$2,
+      eventdate=$3,
+      eventreminderdelay=$4,
+      eventdescription=$5,
+      eventlink=$6,
+      eventemaillist=$7
+    WHERE eventid=$8
+  `, [
+    event_name, event_category, sqlTs,
+    parseInt(event_reminder_delay,10),
+    event_description, event_link,
+    event_attendees, event_id
+  ]);
 
-    // Remove attendees that are no longer in the list
-    const toRemove = current_emails.filter(email => !new_attendees.includes(email));
-    for (const email of toRemove) {
-      await db.none(
-        'DELETE FROM events_to_attendees WHERE eventid = $1 AND attendeeemail = $2',
-        [event_id, email]
-      );
-    }
-
-    // Add new attendees
-    const toAdd = new_attendees.filter(email => !current_emails.includes(email));
-    for (const email of toAdd) {
-      // Check if attendee exists in attendees table
-      const attendeeExists = await db.oneOrNone(
-        'SELECT 1 FROM attendees WHERE attendeeemail = $1', 
-        [email]
-      );
-      
-      if (!attendeeExists) {
-        await db.none(
-          'INSERT INTO attendees (attendeeemail) VALUES ($1)',
-          [email]
-        );
-      }
-
-      await db.none(
-        'INSERT INTO events_to_attendees (eventid, attendeeemail) VALUES ($1, $2)',
-        [event_id, email]
-      );
-    }
-
-    res.redirect('/calendar');
-
-  }catch (err) {
-    console.error('Error in /calendar/edit:', err);
-    res.status(500).send('An error occurred while updating the event.', err);
-  }
-
+  res.redirect('/calendar');
 });
 
 // DELETE (unchanged)
@@ -558,44 +514,6 @@ app.post('/settings', auth, async (req, res) => {
     user: req.session.currentUser[0]
   });
 });
-
-
-//example: http://localhost:3000/rsvp/203?email=micahgagerman21@gmail.com
-// gets event 203, under the users username making the reqest say  micahgagerman21@gmail.com
-app.get("/rsvp/:event_id", async (req,res) => {
-  //get event ID & email address
-  let event_id = req.params.event_id
-  let email_address = -1 //should be current users username
-  ///need rsvp setup in database to continue 
-  /**@todo */
-
-  //1) make sure user is logged in with this email address
-  // Verify current password
-
-  //if not send to login
-  //res.render('pages/error', {
-// error: "example"
- // });
-  //1) check if this event id is real
-  //2) check if user has this event fr
-  //3) if all true, render rsvp page
-  res.render('pages/rsvp', {
-    event_id
-  });
-})
-
-app.post("/rsvp/:event_id", (req,res) => {
-  /** @todo */
-  //update status, remove from email list if no 
-  let event_id = req.params.event_id
-  let email_address = -1 //should be current users username
-  let option_selected =  req.body.options
-
-  console.log(event_id,option_selected);
-})
-
-
-
 
 
 // *****************************************************
