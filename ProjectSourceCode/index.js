@@ -289,7 +289,6 @@ app.post('/calendar', async (req, res) => {
   }
 });
 
-
 app.get('/rsvp', async (req, res) => 
 {
   const user = req.session.currentUser[0].username;
@@ -510,6 +509,13 @@ app.post('/settings', auth, async (req, res) => {
     user: req.session.currentUser[0]
   });
 });
+
+
+
+app.all('*', (req, res) => {
+  res.render("pages/not-found");
+})
+
 
 
 // *****************************************************
