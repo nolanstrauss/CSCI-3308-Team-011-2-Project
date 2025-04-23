@@ -35,4 +35,3 @@ CREATE TABLE attendees
     attendeeemail VARCHAR(100) PRIMARY KEY,
     attendeeusername VARCHAR(50)
 );
-
