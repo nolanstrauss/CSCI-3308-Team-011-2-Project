@@ -20,15 +20,15 @@ CREATE TABLE events
     eventreminderdelay INT NOT NULL,
     eventdescription TEXT,
     eventlink VarChar(520),
-    eventuser VarChar(50),
+    eventuser VarChar(250),
     eventemaillist VarChar(1000)
 );
-
 
 CREATE TABLE events_to_attendees
 (
     eventid INT,
-    attendeeemail VARCHAR(100)
+    attendeeemail VARCHAR(100),
+    rsvp CHAR(1)
 );
 
 CREATE TABLE attendees 

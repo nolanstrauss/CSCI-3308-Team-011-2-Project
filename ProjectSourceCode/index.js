@@ -29,19 +29,8 @@ const hbs = handlebars.create({
 });
 
 Handlebars.registerHelper('inc', v => parseInt(v) + 1);
-Handlebars.registerHelper('date', v => {
-  const [d] = v.split(' ');
-  const [y,m,day] = d.split('-');
-  return `${m}/${day}/${y}`;
-});
-Handlebars.registerHelper('time', v => {
-  const [,t] = v.split(' ');
-  let [h,mm] = t.split(':').map(Number);
-  let am = 'AM';
-  if (h >= 12) { am = 'PM'; if (h > 12) h -= 12; }
-  if (h === 0) { h = 12; am = 'PM'; }
-  return `${h}:${String(mm).padStart(2,'0')}${am}`;
-});
+Handlebars.registerHelper('date', v => { return `${v.getMonth()+1}/${v.getDate()}/${v.getFullYear()}`;});
+Handlebars.registerHelper('time', v => { return `${v.toLocaleTimeString()}`;});
 
 const db = pgp({
   host: 'db',
@@ -115,6 +104,9 @@ const auth = (req, res, next) => {
 };
 
 app.use('/calendar', auth);
+app.use('/logout', auth);
+app.use('/manage-invitations', auth);
+app.use('/rsvp', auth);
 app.use('/rsvp/:event_id', auth);
 app.use('/logout',   auth);
 
@@ -137,6 +129,50 @@ app.get('/calendar', async (req, res) => {
   `, [user]);
   res.render('pages/calendar', { events });
 });
+
+app.get('/manage-invitations', async (req, res) => 
+  {
+    const username = req.session.currentUser[0].username;
+    console.log(username);
+    var query = `SELECT eventName, eventCategory, eventDate, eventDescription, eventID FROM events WHERE eventUser = '${username}' ORDER BY eventDate;`;
+    results = [];
+    try 
+    {
+      results = await db.any(query);
+      console.log("Successfully retrieved " +  results.length + " events");
+      console.log(results);
+      res.render('pages/manage-invitations', { events: results });
+    } 
+    catch (err) 
+    {
+      console.log("Error occured in finding .");
+      app.use('/edit-calendar', auth);
+      app.use('/manage-invitations', auth);
+      res.render('pages/manage-invitations', {});
+    }
+  });
+
+app.get('/manage-invitations', async (req, res) => 
+  {
+    const username = req.session.currentUser[0].username;
+    console.log(username);
+    var query = `SELECT eventName, eventCategory, eventDate, eventDescription, eventID FROM events WHERE eventUser = '${username}' ORDER BY eventDate;`;
+    results = [];
+    try 
+    {
+      results = await db.any(query);
+      console.log("Successfully retrieved " +  results.length + " events");
+      console.log(results);
+      res.render('pages/manage-invitations', { events: results });
+    } 
+    catch (err) 
+    {
+      console.log("Error occured in finding .");
+      app.use('/edit-calendar', auth);
+      app.use('/manage-invitations', auth);
+      res.render('pages/manage-invitations', {});
+    }
+  });
 
 // ICS export (unchanged)
 app.get('/calendar/ics', async (req, res) => {
@@ -190,22 +226,119 @@ app.post('/calendar', async (req, res) => {
     VALUES($1,$2)
   `, [user, eventid]);
 
-  // distribute to attendees table
-  const emails = event_attendees.split(',').map(e=>e.trim()).filter(e=>e);
-  for (const email of emails) {
-    await db.none(
-      `INSERT INTO events_to_attendees(eventid,attendeeemail)
-         VALUES($1,$2)`,
-      [eventid, email]
-    );
-    await db.none(
-      `INSERT INTO attendees(attendeeemail) VALUES($1)
-         ON CONFLICT(attendeeemail) DO NOTHING`,
-      [email]
-    );
+  //seperate the event email list by commas and add each value into the attendees db
+  const attendees = event_attendees.replace(" ", "").split(',');
+
+  for (const attendee of attendees) 
+  {
+    await db.none(`
+      INSERT INTO events_to_attendees (eventid,attendeeemail,rsvp)
+      VALUES($1,$2,$3)
+    `, [event_id, attendee,"p"]);
+
+    await db.none(`
+      INSERT INTO attendees (attendeeemail) 
+      VALUES($1)
+    `, [attendee]);
+
+    console.log(attendee);
   }
 
   res.redirect('/calendar');
+});
+
+app.get('/rsvp', async (req, res) => 
+{
+  const user = req.session.currentUser[0].username;
+  const events = await db.any(`
+    SELECT
+      eventid       AS eventid,
+      eventname     AS eventname,
+      eventcategory AS eventcategory,
+      eventdate     AS eventdate,
+      eventdescription AS eventdescription,
+      eventreminderdelay AS eventreminderdelay,
+      eventlink     AS eventlink,
+      eventemaillist  AS eventattendees
+    FROM events WHERE eventid IN
+    (SELECT eventid FROM events_to_attendees
+    WHERE attendeeemail = $1 AND rsvp = 'p')
+    ORDER BY eventdate;
+  `, [user]);
+  console.log(events);
+  res.render('pages/rsvp',{events});
+});
+
+
+app.post('/rsvp', async (req, res) => 
+{
+  const {
+    event_id, rsvp_status
+  } = req.body;
+  const user = req.session.currentUser[0].username;
+
+  if (rsvp_status == 'accept')
+  {
+    rsvp_stat = 'a';
+  }
+  else if (rsvp_status == 'decline')
+  {
+    rsvp_stat = 'd';
+  }
+  
+  const event_result = await db.one(`
+    UPDATE events_to_attendees
+    SET rsvp = ${rsvp_stat}
+    WHERE eventid = '${event_id}' AND attendeeemail = '${user}';`);
+  
+  console.log(event_result);
+});
+
+app.get('/rsvp', async (req, res) => 
+{
+  const user = req.session.currentUser[0].username;
+  const events = await db.any(`
+    SELECT
+      eventid       AS eventid,
+      eventname     AS eventname,
+      eventcategory AS eventcategory,
+      eventdate     AS eventdate,
+      eventdescription AS eventdescription,
+      eventreminderdelay AS eventreminderdelay,
+      eventlink     AS eventlink,
+      eventemaillist  AS eventattendees
+    FROM events WHERE eventid IN
+    (SELECT eventid FROM events_to_attendees
+    WHERE attendeeemail = $1 AND rsvp = 'p')
+    ORDER BY eventdate;
+  `, [user]);
+  console.log(events);
+  res.render('pages/rsvp',{events});
+});
+
+
+app.post('/rsvp', async (req, res) => 
+{
+  const {
+    event_id, rsvp_status
+  } = req.body;
+  const user = req.session.currentUser[0].username;
+
+  if (rsvp_status == 'accept')
+  {
+    rsvp_stat = 'a';
+  }
+  else if (rsvp_status == 'decline')
+  {
+    rsvp_stat = 'd';
+  }
+  
+  const event_result = await db.one(`
+    UPDATE events_to_attendees
+    SET rsvp = ${rsvp_stat}
+    WHERE eventid = '${event_id}' AND attendeeemail = '${user}';`);
+  
+  console.log(event_result);
 });
 
 // === UPDATED EDIT handler ===
@@ -242,6 +375,28 @@ app.post('/calendar/edit', async (req, res) => {
 app.post('/calendar/delete', async (req, res) => {
   await db.none('DELETE FROM events WHERE eventid=$1', [req.body.event_id]);
   res.redirect('/calendar');
+});
+
+app.get('/manage-invitations', async (req, res) => 
+{
+  const username = req.session.currentUser[0].username;
+  console.log(username);
+  var query = `SELECT eventName, eventCategory, eventDate, eventDescription, eventID FROM events WHERE eventUser = '${username}' ORDER BY eventDate;`;
+  results = [];
+  try 
+  {
+    results = await db.any(query);
+    console.log("Successfully retrieved " +  results.length + " events");
+    console.log(results);
+    res.render('pages/manage-invitations', { events: results });
+  } 
+  catch (err) 
+  {
+    console.log("Error occured in finding .");
+    app.use('/edit-calendar', auth);
+    app.use('/manage-invitations', auth);
+    res.render('pages/manage-invitations', {});
+  }
 });
 
 app.get('/logout', (req, res) => {
