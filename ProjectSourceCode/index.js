@@ -386,32 +386,82 @@ app.post('/rsvp', async (req, res) =>
 
 // === UPDATED EDIT handler ===
 app.post('/calendar/edit', async (req, res) => {
-  const {
-    event_id, event_name, event_category,
-    event_date, event_time,
-    event_reminder_delay, event_description,
-    event_link, event_attendees
-  } = req.body;
-  const sqlTs = `${event_date} ${event_time}`;  // no Date() → toISOString()
+  try{
+    const {
+      event_id, event_name, event_category,
+      event_date, event_time,
+      event_reminder_delay, event_description,
+      event_link, new_event_attendees
+    } = req.body;
+    const dt = new Date(`${event_date}T${event_time}`);
+    const sqlTs = dt.toISOString().slice(0,19).replace('T',' ');
+    
+    let new_attendees = new_event_attendees.split(',')
+    .map(email => email.trim())
+    .filter(email=>email.length>0);
+    
+    
+    await db.none(`
+      UPDATE events SET
+        eventname=$1,
+        eventcategory=$2,
+        eventdate=$3,
+        eventreminderdelay=$4,
+        eventdescription=$5,
+        eventlink=$6,
+        eventemaillist=$7
+      WHERE eventid=$8
+    `, [
+      event_name, event_category, sqlTs,
+      parseInt(event_reminder_delay,10),
+      event_description, event_link,
+      new_attendees.join(','), event_id
+    ]);
 
-  await db.none(`
-    UPDATE events SET
-      eventname=$1,
-      eventcategory=$2,
-      eventdate=$3,
-      eventreminderdelay=$4,
-      eventdescription=$5,
-      eventlink=$6,
-      eventemaillist=$7
-    WHERE eventid=$8
-  `, [
-    event_name, event_category, sqlTs,
-    parseInt(event_reminder_delay,10),
-    event_description, event_link,
-    event_attendees, event_id
-  ]);
+    let current_attendees = await db.any(
+      `SELECT attendeeemail FROM events_to_attendees where eventid = $1`, 
+      [event_id]
+    );
+    let current_emails = current_attendees.map(a=> a.attendeeemail);
 
-  res.redirect('/calendar');
+    // Remove attendees that are no longer in the list
+    let toRemove = current_emails.filter(email => !new_attendees.includes(email));
+    for (const email of toRemove) {
+      await db.none(
+        'DELETE FROM events_to_attendees WHERE eventid = $1 AND attendeeemail = $2',
+        [event_id, email]
+      );
+    }
+
+    // Add new attendees
+    const toAdd = new_attendees.filter(email => !current_emails.includes(email));
+    for (const email of toAdd) {
+      // Check if attendee exists in attendees table
+      const attendeeExists = await db.oneOrNone(
+        'SELECT 1 FROM attendees WHERE attendeeemail = $1', 
+        [email]
+      );
+      
+      if (!attendeeExists) {
+        await db.none(
+          'INSERT INTO attendees (attendeeemail) VALUES ($1)',
+          [email]
+        );
+      }
+
+      await db.none(
+        'INSERT INTO events_to_attendees (eventid, attendeeemail) VALUES ($1, $2)',
+        [event_id, email]
+      );
+    }
+
+    res.redirect('/calendar');
+
+  }catch (err) {
+    console.error('Error in /calendar/edit:', err);
+    res.status(500).send('An error occurred while updating the event.', err);
+  }
+
 });
 
 // DELETE (unchanged)

@@ -235,7 +235,7 @@
           document.getElementById('edit_reminder').value = ev.eventreminderdelay || '';
           document.getElementById('edit_description').value = ev.eventdescription;
           document.getElementById('edit_link').value = ev.eventlink;
-          document.getElementById('new_event_attendees').value = ev.eventattendees;
+          document.getElementById('new_event_attendees').value = ev.eventemaillist;
 
           new bootstrap.Modal(document.getElementById('edit_modal')).show();
         };
