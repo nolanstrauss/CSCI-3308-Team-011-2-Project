@@ -1,8 +1,7 @@
 CREATE TABLE users
 (
     username VARCHAR(50) PRIMARY KEY,
-    password VARCHAR(60) NOT NULL,
-    email VARCHAR(100)
+    password VARCHAR(60) NOT NULL
 );
 
 CREATE TABLE users_to_events

@@ -151,20 +151,22 @@
         table.appendChild(row);
         row = document.createElement('tr');
       }
-      const td = document.createElement('td');
+      let td = document.createElement('td');
       td.style.padding = '4px';
       td.style.height = '120px';
-      const num = document.createElement('div');
+      let num = document.createElement('div');
       num.style.fontWeight = 'bold';
       num.textContent = d;
       td.appendChild(num);
 
-      const key = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      let key = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
       (eventsByDate[key] || []).forEach(ev => {
-        const eb = document.createElement('div');
+        let eb = document.createElement('div');
         eb.className = 'eventBlock';
         eb.textContent = `${ev.time} – ${ev.eventname}`;
         eb.onclick = () => {
+          console.log("this is the event:", ev);
+
           document.getElementById('edit_event_id').value = ev.eventid;
           document.getElementById('delete_event_id').value = ev.eventid;
           document.getElementById('edit_name').value = ev.eventname;
@@ -174,7 +176,7 @@
           document.getElementById('edit_reminder').value = ev.eventreminderdelay || '';
           document.getElementById('edit_description').value = ev.eventdescription;
           document.getElementById('edit_link').value = ev.eventlink;
-          document.getElementById('event_attendees').value = ev.eventattendees;
+          document.getElementById('new_event_attendees').value = ev.eventattendees;
           new bootstrap.Modal(document.getElementById('edit_modal')).show();
         };
         td.appendChild(eb);
@@ -204,7 +206,7 @@
   });
 
 document.addEventListener('submit', async (event) => {
-  const formID = event.target.id;
+  let formID = event.target.id;
   let email_list = '';
   if (formID === 'create_event') {
     email_list = document.getElementById('event_attendees').value;
@@ -221,7 +223,8 @@ document.addEventListener('submit', async (event) => {
 
   const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
-  for (const email of emails) {
+
+  for (let email of emails) {
     if (!regex.test(email)) {
       alert("One or more of the emails you have entered are invalid!");
       event.preventDefault();
@@ -229,14 +232,17 @@ document.addEventListener('submit', async (event) => {
     }
   }
 
-  const event_id = document.getElementById('event_id').value;
+  let event_id = document.getElementById('event_id').value;
 
-  const old_emails = await db.any(
+  let old_emails = await db.any(
     `SELECT attendeeemail
      FROM events_to_attendees
      WHERE eventid = $1`,
     [event_id]
   );
+
+  console.log("old emails:", old_emails);
+  console.log("new emails: ", emails);
 
   for (const old_email of old_emails) {
     if (!emails.includes(old_email.attendeeemail)) {
@@ -247,6 +253,25 @@ document.addEventListener('submit', async (event) => {
       );
     }
   }
+
+  for (const email of emails){
+    if(!old_emails.some(old_email => old_email.attendeeemail == email)){
+      await db.none(
+        `INSERT INTO events_to_attendees (eventid, attendeeemail)
+        VALUES ($1, $2)`,
+        [event_id, email]
+      );
+    }
+  }
+
+  await db.none(
+    `UPDATE events
+     SET eventemaillist = $1
+     WHERE eventid = $2`,
+    [emails.join(','), event_id]
+  );
+
+
 });
 
 
