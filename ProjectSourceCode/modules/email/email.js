@@ -144,7 +144,7 @@ let EmailEventLoop = async() => {
 })()
 
 // public methods
-let createEvent = async(user_emails,event_name,event_time,reminder_time) => {
+let CreateEvent = async(user_emails,event_name,event_time,reminder_time) => {
   let event = new Event(user_emails,event_name,event_time,reminder_time);
   // send email
   try {
@@ -180,4 +180,4 @@ let RemoveUserFromEvent = (userEmail, eventName) => {
 };
 
 
-module.exports = {createEvent,RemoveUserFromEvent}
+module.exports = {CreateEvent,RemoveUserFromEvent}
