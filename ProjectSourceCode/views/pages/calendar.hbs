@@ -217,11 +217,10 @@
       return;
     }
     let emails = email_list.split(',').filter(e => e.length > 0);
-    alert(emails);
     const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     for(const email of emails){
       if(!regex.test(email)){
-        console.log("One or more of the emails you have entered are invalid!");
+        alert("One or more of the emails you have entered are invalid!");
         event.preventDefault()
         return;
       }
