@@ -118,6 +118,7 @@ app.use('/calendar', auth);
 app.use('/rsvp/:event_id', auth);
 app.use('/logout',   auth);
 
+// === UPDATED GET /calendar ===
 app.get('/calendar', async (req, res) => {
   const user = req.session.currentUser[0].username;
   const events = await db.any(`
@@ -125,11 +126,11 @@ app.get('/calendar', async (req, res) => {
       eventid,
       eventname,
       eventcategory,
-      eventdate,
+      to_char(eventdate,'YYYY-MM-DD HH24:MI:SS') AS eventdate,
       eventdescription,
       eventreminderdelay,
       eventlink,
-      eventemaillist      AS eventemaillist     -- keep raw column name
+      eventemaillist AS eventemaillist
     FROM events
     WHERE eventuser = $1
     ORDER BY eventdate;
@@ -137,6 +138,7 @@ app.get('/calendar', async (req, res) => {
   res.render('pages/calendar', { events });
 });
 
+// ICS export (unchanged)
 app.get('/calendar/ics', async (req, res) => {
   const user = req.session.currentUser[0].username;
   const rows = await db.any(`
@@ -146,9 +148,11 @@ app.get('/calendar/ics', async (req, res) => {
   `, [user]);
   const icsArr = rows.map(e => {
     const d = new Date(e.eventdate);
-    return { title: e.eventname,
-             start: [d.getFullYear(), d.getMonth()+1, d.getDate(), d.getHours(), d.getMinutes()],
-             description: e.eventdescription };
+    return {
+      title:       e.eventname,
+      start:       [d.getFullYear(), d.getMonth()+1, d.getDate(), d.getHours(), d.getMinutes()],
+      description: e.eventdescription
+    };
   });
   const { error, value } = createEvents(icsArr);
   if (error) return res.status(500).send('ICS generation error');
@@ -156,7 +160,7 @@ app.get('/calendar/ics', async (req, res) => {
   res.type('text/calendar').send(value);
 });
 
-// create
+// === UPDATED CREATE handler ===
 app.post('/calendar', async (req, res) => {
   const {
     event_name, event_category,
@@ -165,8 +169,7 @@ app.post('/calendar', async (req, res) => {
     event_link, event_attendees
   } = req.body;
   const user = req.session.currentUser[0].username;
-  const dt = new Date(`${event_date}T${event_time}`);
-  const sqlTs = dt.toISOString().slice(0,19).replace('T',' ');
+  const sqlTs = `${event_date} ${event_time}`;  // no Date() → toISOString()
 
   const { eventid } = await db.one(`
     INSERT INTO events
@@ -192,18 +195,20 @@ app.post('/calendar', async (req, res) => {
   for (const email of emails) {
     await db.none(
       `INSERT INTO events_to_attendees(eventid,attendeeemail)
-         VALUES($1,$2)`
-    , [eventid, email]);
+         VALUES($1,$2)`,
+      [eventid, email]
+    );
     await db.none(
       `INSERT INTO attendees(attendeeemail) VALUES($1)
-         ON CONFLICT(attendeeemail) DO NOTHING`
-    , [email]);
+         ON CONFLICT(attendeeemail) DO NOTHING`,
+      [email]
+    );
   }
 
   res.redirect('/calendar');
 });
 
-// edit
+// === UPDATED EDIT handler ===
 app.post('/calendar/edit', async (req, res) => {
   const {
     event_id, event_name, event_category,
@@ -211,8 +216,8 @@ app.post('/calendar/edit', async (req, res) => {
     event_reminder_delay, event_description,
     event_link, event_attendees
   } = req.body;
-  const dt = new Date(`${event_date}T${event_time}`);
-  const sqlTs = dt.toISOString().slice(0,19).replace('T',' ');
+  const sqlTs = `${event_date} ${event_time}`;  // no Date() → toISOString()
+
   await db.none(`
     UPDATE events SET
       eventname=$1,
@@ -229,10 +234,11 @@ app.post('/calendar/edit', async (req, res) => {
     event_description, event_link,
     event_attendees, event_id
   ]);
+
   res.redirect('/calendar');
 });
 
-// delete
+// DELETE (unchanged)
 app.post('/calendar/delete', async (req, res) => {
   await db.none('DELETE FROM events WHERE eventid=$1', [req.body.event_id]);
   res.redirect('/calendar');
@@ -250,13 +256,14 @@ app.get('/logout', (req, res) => {
     res.render('pages/logout', {});
   });
 });
-// Render the settings page
+
+// Render the settings page (unchanged)
 app.get('/settings', auth, (req, res) => {
   const user = req.session.currentUser[0];
   res.render('pages/settings', { user });
 });
 
-// Handle settings update
+// Handle settings update (unchanged)
 app.post('/settings', auth, async (req, res) => {
   const { username, email, currentPassword, newPassword } = req.body;
   const user = req.session.currentUser[0];
@@ -291,14 +298,20 @@ app.post('/settings', auth, async (req, res) => {
     const query = `UPDATE users SET ${updates.join(', ')} WHERE username=$4`;
     params.push(user.username);
     await db.none(query, params);
-    req.session.currentUser[0] = { ...user, username, email, password: newPassword ? hashedPassword : user.password };
+    req.session.currentUser[0] = {
+      ...user,
+      username,
+      email,
+      password: newPassword ? hashedPassword : user.password
+    };
   }
 
-  res.render('pages/settings', { success: true, message: 'Settings updated successfully', user: req.session.currentUser[0] });
+  res.render('pages/settings', {
+    success: true,
+    message: 'Settings updated successfully',
+    user: req.session.currentUser[0]
+  });
 });
-
-
-
 
 
 //example: http://localhost:3000/rsvp/203?email=micahgagerman21@gmail.com
@@ -334,6 +347,7 @@ app.post("/rsvp/:event_id", (req,res) => {
 
   console.log(event_id,option_selected);
 })
+
 
 
 
