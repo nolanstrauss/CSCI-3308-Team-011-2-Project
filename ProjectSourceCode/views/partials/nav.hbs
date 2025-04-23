@@ -3,7 +3,7 @@
     <div class="container">
 
       <!-- Website Name -->
-      <a class="navbar-brand fw-bold text-white" href="/">
+      <a class="navbar-brand fw-bold text-white" href="{{#if user}}/calendar{{else}}/welcome{{/if}}">
         TimeBridge Calendar
       </a>
 
@@ -36,7 +36,7 @@
         <!-- Right-Side Navigation -->
         <ul class="navbar-nav ms-auto">
           {{#if user}}
-            <!-- Logged‑in dropdown -->
+            <!-- Logged-in dropdown -->
             <li class="nav-item dropdown">
               <a
                 class="nav-link dropdown-toggle text-white"
@@ -56,7 +56,6 @@
               </ul>
             </li>
           {{else}}
-            {{!-- When not logged in, show Register on the login page, otherwise Login --}}
             {{#if routeIsLogin}}
               <li class="nav-item">
                 <a class="nav-link btn btn-outline-primary px-3 text-white" href="/register">Register</a>
