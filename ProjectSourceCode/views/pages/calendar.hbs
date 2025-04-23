@@ -203,29 +203,51 @@
     renderCalendar(year, month);
   });
 
-  document.addEventListener('submit', (event)=>{
-    const formID = event.target.id;
-    var email_list = '';
-    //get the value entered and all currently stored in connection to the db, compare and delet ones not in current
-    if(formID=='create_event'){
-      email_list = document.getElementById('event_attendees').value; 
-    }
-    else if(formID =='edit_event'){
-      email_list = document.getElementById('new_event_attendees').value;
-    }
-    else{
+document.addEventListener('submit', async (event) => {
+  const formID = event.target.id;
+  let email_list = '';
+  if (formID === 'create_event') {
+    email_list = document.getElementById('event_attendees').value;
+  } else if (formID === 'edit_event') {
+    email_list = document.getElementById('new_event_attendees').value;
+  } else {
+    return;
+  }
+
+  const emails = email_list
+    .split(',')
+    .map(e => e.trim())
+    .filter(e => e.length > 0);
+
+  const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+  for (const email of emails) {
+    if (!regex.test(email)) {
+      alert("One or more of the emails you have entered are invalid!");
+      event.preventDefault();
       return;
     }
-    let emails = email_list.split(',').filter(e => e.length > 0);
-    const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    for(const email of emails){
-      if(!regex.test(email)){
-        alert("One or more of the emails you have entered are invalid!");
-        event.preventDefault()
-        return;
-      }
-      //what do we want to do instead- compare to events listed for current event, if there are any that are not the same in the original, delete those from the table
+  }
+
+  const event_id = document.getElementById('event_id').value;
+
+  const old_emails = await db.any(
+    `SELECT attendeeemail
+     FROM events_to_attendees
+     WHERE eventid = $1`,
+    [event_id]
+  );
+
+  for (const old_email of old_emails) {
+    if (!emails.includes(old_email.attendeeemail)) {
+      await db.none(
+        `DELETE FROM events_to_attendees
+         WHERE eventid = $1 AND attendeeemail = $2`,
+        [event_id, old_email.attendeeemail]
+      );
     }
-  
-  });
+  }
+});
+
+
 </script>
