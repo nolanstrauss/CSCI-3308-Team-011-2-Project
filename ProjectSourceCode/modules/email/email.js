@@ -1,10 +1,8 @@
-// import nodeMailer
+const path = require('path');
+require("dotenv").config({ path: path.join(__dirname, '../../.env') });
 const nodemailer = require("nodemailer");
 // lodash for convenience 
 const _ = require("lodash")
-
-// config env
-require("dotenv").config({path: "../../.env"});
 
 // import templates
 let {confirmation_email_template, reminder_email_template} = require("./templates")
@@ -61,7 +59,7 @@ class Event {
   constructor(user_emails,event_name,event_time,reminder_time,link,description) {
     this.user_emails = user_emails;
     this.event_name = event_name;
-    this.event_time = event_time;
+    this.event_time = new Date(event_time);
     this.reminder_time = reminder_time;
     this.link = link
     this.description = description

@@ -46,10 +46,11 @@ let reminder_email_template = (event,user_index) => {
                 <p>Starts in: ${reminder_time} minute${reminder_time > 1 ? "s": ""}</p>
             </div>
             <div style="margin: 15px 0;">
-                
                 <div style="border:2px solid rgba(0, 0, 0, 0.284);">
-                    <h3>${event_name}</h3>
+                    <h3>${event_name}: <a href=${link}>Link</a></h3>
                 </div>
+
+                <p>${description}</p>
             </div>
         </div>
     </div>`
