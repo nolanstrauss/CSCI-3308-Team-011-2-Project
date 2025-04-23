@@ -192,4 +192,19 @@ let ChangeEventTime = (user_email, event_name, new_event_time) => {
   }
   return updated;
 };
-module.exports = {CreateEvent, RemoveUserFromEvent, ChangeEventTime};
+
+
+let DeleteEvent = (event_name) => {
+  for(let i = 0; i<events.length; i++) {
+    if(events.get(i).event_name == event_name) {
+      events.removeEventByEvent(events.get(i));
+      console.log("deleted event: " + event_name)
+      return;
+
+    }
+  }
+}
+
+
+
+module.exports = {CreateEvent, RemoveUserFromEvent, ChangeEventTime,DeleteEvent};

@@ -13,7 +13,7 @@ const bodyParser = require('body-parser');
 const session = require('express-session');
 const bcrypt = require('bcryptjs');
 const { createEvents } = require('ics');
-let {CreateEvent, RemoveUserFromEvent, ChangeEventTime} = require("./modules/email/email");
+let {CreateEvent, RemoveUserFromEvent, ChangeEventTime, DeleteEvent} = require("./modules/email/email");
 
 // *****************************************************
 // <!-- Section 2 : Connect to DB -->
@@ -471,7 +471,18 @@ app.post('/calendar/edit', async (req, res) => {
 // DELETE (unchanged)
 app.post('/calendar/delete', async (req, res) => {
   await db.none('DELETE FROM events WHERE eventid=$1', [req.body.event_id]);
+  
+  //delete the event for everyone
+  console.log("about to delete")
+  try {
+    DeleteEvent(req.body.eventname)
+  } catch(e) {
+    console.log("error deleting event in mailer:" + e)
+  }
+  
   res.redirect('/calendar');
+
+
 });
 
 app.get('/manage-invitations', async (req, res) => 
