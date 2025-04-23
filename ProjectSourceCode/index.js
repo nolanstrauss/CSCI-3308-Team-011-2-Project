@@ -264,6 +264,7 @@ CreateEvent(
   res.redirect('/calendar');
 });
 
+
 app.get('/rsvp', async (req, res) => 
 {
   const user = req.session.currentUser[0].username;
