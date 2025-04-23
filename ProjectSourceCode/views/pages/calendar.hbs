@@ -109,7 +109,11 @@
       Create Event
     </button>
     <a href="/calendar/ics" class="btn btn-success btn-sm">Download ICS</a>
+    <button id="viewMonth" class="btn btn-secondary btn-sm">Month</button>
+    <button id="viewWeek" class="btn btn-secondary btn-sm">Week</button>
+    <button id="viewDay" class="btn btn-secondary btn-sm">Day</button>
   </div>
+
 
   <table id="calendarTable"></table>
 
@@ -189,79 +193,213 @@
 
   let year = new Date().getFullYear(),
       month = new Date().getMonth();
+      day = new Date().getDate(),
+      viewType = 'month';
 
-  function renderCalendar(y, m) {
-    const table = document.getElementById('calendarTable');
-    table.innerHTML = '';
-    const header = document.createElement('tr');
-    ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d => {
-      const th = document.createElement('th');
-      th.textContent = d;
-      header.appendChild(th);
-    });
-    table.appendChild(header);
+  function renderCurrentView() {
+  if (viewType === 'month') {
+    renderMonthView(year, month);
+  } else if (viewType === 'week') {
+    renderWeekView(year, month, day);
+  } else if (viewType === 'day') {
+    renderDayView(year, month, day);
+  }
+}
+function renderMonthView(y, m) {
+  const table = document.getElementById('calendarTable');
+  table.innerHTML = '';
 
-    const firstDay = new Date(y, m, 1).getDay();
-    const daysInMonth = new Date(y, m+1, 0).getDate();
-    let row = document.createElement('tr');
-    for (let i = 0; i < firstDay; i++) row.appendChild(document.createElement('td'));
-    for (let d = 1; d <= daysInMonth; d++) {
-      if ((firstDay + d - 1) % 7 === 0 && d > 1) {
-        table.appendChild(row);
-        row = document.createElement('tr');
-      }
-      let td = document.createElement('td');
-      td.style.padding = '4px';
-      td.style.height = '120px';
-      let num = document.createElement('div');
-      num.style.fontWeight = 'bold';
-      num.textContent = d;
-      td.appendChild(num);
+  // Create header row with day names
+  const header = document.createElement('tr');
+  ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(day => {
+    const th = document.createElement('th');
+    th.textContent = day;
+    header.appendChild(th);
+  });
+  table.appendChild(header);
 
-      let key = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-      (eventsByDate[key] || []).forEach(ev => {
-        let eb = document.createElement('div');
-        eb.className = 'eventBlock';
-        eb.textContent = `${ev.time} – ${ev.eventname}`;
-        eb.onclick = () => {
-          console.log("this is the event:", ev);
+  // Determine the first day and total days in the month
+  const firstDay = new Date(y, m, 1).getDay();
+  const daysInMonth = new Date(y, m+1, 0).getDate();
+  let row = document.createElement('tr');
 
-          document.getElementById('edit_event_id').value = ev.eventid;
-          document.getElementById('delete_event_id').value = ev.eventid;
-          document.getElementById('edit_name').value = ev.eventname;
-          document.getElementById('edit_category').value = ev.eventcategory;
-          document.getElementById('edit_date').value = key;
-          document.getElementById('edit_time').value = ev.time;
-          document.getElementById('edit_reminder').value = ev.eventreminderdelay || '';
-          document.getElementById('edit_description').value = ev.eventdescription;
-          document.getElementById('edit_link').value = ev.eventlink;
-          document.getElementById('new_event_attendees').value = ev.eventemaillist;
-
-          new bootstrap.Modal(document.getElementById('edit_modal')).show();
-        };
-        td.appendChild(eb);
-      });
-
-      row.appendChild(td);
-    }
-    while (row.children.length < 7) row.appendChild(document.createElement('td'));
-    table.appendChild(row);
-
-    document.getElementById('calendarTitle').textContent =
-      `${['January','February','March','April','May','June','July','August','September','October','November','December'][m]} ${y}`;
+  // Insert blank cells for days before the 1st
+  for (let i = 0; i < firstDay; i++) {
+    row.appendChild(document.createElement('td'));
   }
 
+  // Loop through each day of the month
+  for (let d = 1; d <= daysInMonth; d++) {
+    if ((firstDay + d - 1) % 7 === 0 && d > 1) {
+      table.appendChild(row);
+      row = document.createElement('tr');
+    }
+
+    const td = document.createElement('td');
+    td.style.padding = '4px';
+    td.style.height = '120px';
+
+    // Add the day number
+    const num = document.createElement('div');
+    num.style.fontWeight = 'bold';
+    num.textContent = d;
+    td.appendChild(num);
+
+    // Build the key from the current year, month, day
+    const key = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    (eventsByDate[key] || []).forEach(ev => {
+      const eb = document.createElement('div');
+      eb.className = 'eventBlock';
+      eb.textContent = `${ev.time} – ${ev.eventname}`;
+      eb.onclick = () => {
+        // Populate the edit modal
+        document.getElementById('edit_event_id').value   = ev.eventid;
+        document.getElementById('delete_event_id').value = ev.eventid;
+        document.getElementById('edit_name').value       = ev.eventname;
+        document.getElementById('edit_category').value   = ev.eventcategory;
+        document.getElementById('edit_date').value       = key;
+        document.getElementById('edit_time').value       = ev.time;
+        document.getElementById('edit_reminder').value   = ev.eventreminderdelay || '';
+        document.getElementById('edit_description').value= ev.eventdescription;
+        document.getElementById('edit_link').value       = ev.eventlink;
+        document.getElementById('edit_attendees').value  = ev.eventemaillist;
+        new bootstrap.Modal(document.getElementById('edit_modal')).show();
+      };
+      td.appendChild(eb);
+    });
+    row.appendChild(td);
+  }
+
+  // Fill any remaining cells to complete the row
+  while (row.children.length < 7) {
+    row.appendChild(document.createElement('td'));
+  }
+  table.appendChild(row);
+
+  // Update the calendar title
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('calendarTitle').textContent = `${monthNames[m]} ${y}`;
+}
+function renderWeekView(y, m, d) {
+  // Clear table contents
+  const table = document.getElementById('calendarTable');
+  table.innerHTML = '';
+
+  // Create header row (days of week)
+  const header = document.createElement('tr');
+  const dateObj = new Date(y, m, d);
+  const startOfWeek = new Date(dateObj);
+  startOfWeek.setDate(dateObj.getDate() - dateObj.getDay());
+  for (let i = 0; i < 7; i++) {
+    const th = document.createElement('th');
+    const dayDate = new Date(startOfWeek);
+    dayDate.setDate(startOfWeek.getDate() + i);
+    th.textContent = dayDate.toLocaleDateString(undefined, { weekday: 'short', month: 'numeric', day: 'numeric' });
+    header.appendChild(th);
+  }
+  table.appendChild(header);
+
+  // Create one row for the week events
+  const row = document.createElement('tr');
+  for (let i = 0; i < 7; i++) {
+    const td = document.createElement('td');
+    td.style.padding = '4px';
+    td.style.height = '120px';
+    const dayDate = new Date(startOfWeek);
+    dayDate.setDate(startOfWeek.getDate() + i);
+    const key = `${dayDate.getFullYear()}-${String(dayDate.getMonth()+1).padStart(2,'0')}-${String(dayDate.getDate()).padStart(2,'0')}`;
+    // Add day number (optional)
+    const num = document.createElement('div');
+    num.style.fontWeight = 'bold';
+    num.textContent = dayDate.getDate();
+    td.appendChild(num);
+    // Append any events in the day
+    (eventsByDate[key] || []).forEach(ev => {
+      const eb = document.createElement('div');
+      eb.className = 'eventBlock';
+      eb.textContent = `${ev.time} – ${ev.eventname}`;
+      // Attach the same onclick event if desired
+      eb.onclick = () => { /* open edit modal similar to month view */ };
+      td.appendChild(eb);
+    });
+    row.appendChild(td);
+  }
+  table.appendChild(row);
+  document.getElementById('calendarTitle').textContent =
+    `Week of ${startOfWeek.toLocaleDateString()}`;
+}
+
+function renderDayView(y, m, d) {
+  const table = document.getElementById('calendarTable');
+  table.innerHTML = '';
+
+  const header = document.createElement('tr');
+  const th = document.createElement('th');
+  th.textContent = new Date(y, m, d).toLocaleDateString(undefined, {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric'
+  });
+  header.appendChild(th);
+  table.appendChild(header);
+
+  // List events for the day
+  const row = document.createElement('tr');
+  const td = document.createElement('td');
+  td.style.padding = '8px';
+  const key = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  (eventsByDate[key] || []).forEach(ev => {
+    const eb = document.createElement('div');
+    eb.className = 'eventBlock';
+    eb.textContent = `${ev.time} – ${ev.eventname}`;
+    eb.onclick = () => { /* open edit modal similar to month view */ };
+    td.appendChild(eb);
+  });
+  row.appendChild(td);
+  table.appendChild(row);
+  document.getElementById('calendarTitle').textContent =
+    `Day: ${new Date(y, m, d).toLocaleDateString()}`;
+}
   document.getElementById('prevMonth').onclick = () => {
+  if (viewType === 'month') {
     if (--month < 0) { month = 11; year--; }
-    renderCalendar(year, month);
-  };
-  document.getElementById('nextMonth').onclick = () => {
+  } else {
+    const dt = new Date(year, month, day);
+    dt.setDate(dt.getDate() - 1);
+    year = dt.getFullYear(); month = dt.getMonth(); day = dt.getDate();
+  }
+  renderCurrentView();
+};
+
+document.getElementById('nextMonth').onclick = () => {
+  if (viewType === 'month') {
     if (++month > 11) { month = 0; year++; }
-    renderCalendar(year, month);
-  };
+  } else {
+    const dt = new Date(year, month, day);
+    dt.setDate(dt.getDate() + 1);
+    year = dt.getFullYear(); month = dt.getMonth(); day = dt.getDate();
+  }
+  renderCurrentView();
+};
+document.getElementById('viewMonth').onclick = () => {
+  viewType = 'month';
+  day = 1; // optionally reset day for month view
+  renderCurrentView();
+};
+
+document.getElementById('viewWeek').onclick = () => {
+  viewType = 'week';
+  renderCurrentView();
+};
+
+document.getElementById('viewDay').onclick = () => {
+  viewType = 'day';
+  renderCurrentView();
+};
 
 document.addEventListener('DOMContentLoaded', () => {
-    renderCalendar(year, month);
+    renderCurrentView();
   });
 
 document.addEventListener('submit', async (event) => {
@@ -308,7 +446,7 @@ document.addEventListener('submit', async (event) => {
       await db.none(
         `DELETE FROM events_to_attendees
          WHERE eventid = $1 AND attendeeemail = $2`,
-        [event_id, old_email.attendeeemail]
+        [event_id, old_email.attenrenderCalendardeeemail]
       );
     }
   }
