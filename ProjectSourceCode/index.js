@@ -80,11 +80,7 @@ app.use((req, res, next) => {
 });
 
 app.get('/',        (req, res) => res.redirect('/welcome'));
-// Welcome route — pass hideNav:true so {{>nav}} is skipped
-app.get('/welcome', (req, res) => {
-  res.render('pages/welcome', { hideNav: true });
-});
-
+app.get('/welcome', (req, res) => res.render('pages/welcome', { hideNav: true }));
 app.get('/login',   (req, res) => res.render('pages/login', { routeIsLogin: true }));
 app.get('/register',(req, res) => res.render('pages/register', { routeIsRegister: true }));
 
@@ -101,6 +97,10 @@ app.post('/login', async (req, res) => {
 
 app.post('/register', async (req, res) => {
   const { username, password } = req.body;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(username)) {
+    return res.render('pages/register', { error: true, message: 'Please enter a valid email address' });
+  }
   if (await db.oneOrNone('SELECT username FROM users WHERE username=$1', [username])) {
     return res.render('pages/register', { error: true, message: 'Username taken' });
   }
