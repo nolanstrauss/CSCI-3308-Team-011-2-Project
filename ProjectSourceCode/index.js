@@ -115,6 +115,7 @@ const auth = (req, res, next) => {
 };
 
 app.use('/calendar', auth);
+app.use('/rsvp/:event_id', auth);
 app.use('/logout',   auth);
 
 // === UPDATED GET /calendar ===
@@ -311,6 +312,45 @@ app.post('/settings', auth, async (req, res) => {
     user: req.session.currentUser[0]
   });
 });
+
+
+//example: http://localhost:3000/rsvp/203?email=micahgagerman21@gmail.com
+// gets event 203, under the users username making the reqest say  micahgagerman21@gmail.com
+app.get("/rsvp/:event_id", async (req,res) => {
+  //get event ID & email address
+  let event_id = req.params.event_id
+  let email_address = -1 //should be current users username
+  ///need rsvp setup in database to continue 
+  /**@todo */
+
+  //1) make sure user is logged in with this email address
+  // Verify current password
+
+  //if not send to login
+  //res.render('pages/error', {
+// error: "example"
+ // });
+  //1) check if this event id is real
+  //2) check if user has this event fr
+  //3) if all true, render rsvp page
+  res.render('pages/rsvp', {
+    event_id
+  });
+})
+
+app.post("/rsvp/:event_id", (req,res) => {
+  /** @todo */
+  //update status, remove from email list if no 
+  let event_id = req.params.event_id
+  let email_address = -1 //should be current users username
+  let option_selected =  req.body.options
+
+  console.log(event_id,option_selected);
+})
+
+
+
+
 
 // *****************************************************
 // <!-- Section 5 : Start Server--> 
