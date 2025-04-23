@@ -205,93 +205,88 @@ app.post('/calendar', async (req, res) => {
     event_reminder_delay, event_description,
     event_link, event_attendees
   } = req.body;
+
   const user = req.session.currentUser[0].username;
 
   const dt = new Date(`${event_date}T${event_time}`);
-  const sqlTs = dt.toISOString().slice(0,19).replace('T',' ');
-  attendees = event_attendees.split(',')
-  .map(email => email.trim())
-  .filter(email => email.length > 0);
+  const sqlTs = dt.toISOString().slice(0, 19).replace('T', ' ');
 
-  const { eventid } = await db.one(`
-    INSERT INTO events
-      (eventname,eventcategory,eventdate,eventreminderdelay,
-       eventdescription,eventlink,eventuser,eventemaillist)
-    VALUES($1,$2,$3,$4,$5,$6,$7,$8)
-    RETURNING eventid
-  `, [
-    event_name, event_category, sqlTs,
-    parseInt(event_reminder_delay,10),
-    event_description, event_link,
-    user, event_attendees
-  ]);
-  
-
-  // associate with user
-  await db.none(`
-    INSERT INTO users_to_events(username,eventid)
-    VALUES($1,$2)
-  `, [user, eventid]);
-
-  
-
-
-
-  //seperate the event email list by commas and add each value into the attendees db
-  let attendees = event_attendees.replace(" ", "").split(',');
-
+  const attendees = (event_attendees || '')
+    .split(',')
+    .map(email => email.trim())
+    .filter(email => email.length > 0);
 
   try {
-    for (const attendee of attendees) 
-      {
-        const attendee_exists = await db.any('SELECT attendeeemail FROM events_to_attendees WHERE eventid=$1 AND attendeeemail=$2', [event_id, attendee]);
-        if(attendee_exists.length<1){
-          await db.none(`
-            INSERT INTO events_to_attendees (eventid,attendeeemail,rsvp)
-            VALUES($1,$2,$3)
-          `, [eventid, attendee,"p"]);
-        }
-        
-        const user_exists = await db.any(`SELECT attendeeemail FROM attendees WHERE attendeeemail= $1`, [attendee]);
-        if(user_exists.length <1){
-          await db.none(`
-            INSERT INTO attendees (attendeeemail) 
-            VALUES($1)
-          `, [attendee]);
-        }
-        
-        console.log(attendee);
+    const { eventid } = await db.one(`
+      INSERT INTO events
+        (eventname, eventcategory, eventdate, eventreminderdelay,
+         eventdescription, eventlink, eventuser, eventemaillist)
+      VALUES($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING eventid
+    `, [
+      event_name, event_category, sqlTs,
+      parseInt(event_reminder_delay, 10),
+      event_description, event_link,
+      user, event_attendees
+    ]);
+
+    await db.none(`
+      INSERT INTO users_to_events(username, eventid)
+      VALUES($1, $2)
+    `, [user, eventid]);
+
+    for (const attendee of attendees) {
+      const attendee_exists = await db.any(`
+        SELECT attendeeemail FROM events_to_attendees 
+        WHERE eventid = $1 AND attendeeemail = $2
+      `, [eventid, attendee]);
+
+      if (attendee_exists.length < 1) {
+        await db.none(`
+          INSERT INTO events_to_attendees (eventid, attendeeemail, rsvp)
+          VALUES($1, $2, $3)
+        `, [eventid, attendee, "p"]);
       }
+
+      const user_exists = await db.any(`
+        SELECT attendeeemail FROM attendees 
+        WHERE attendeeemail = $1
+      `, [attendee]);
+
+      if (user_exists.length < 1) {
+        await db.none(`
+          INSERT INTO attendees (attendeeemail)
+          VALUES($1)
+        `, [attendee]);
+      }
+
+      console.log(attendee);
+    }
+    //builds set of email list adding the user correctly :P
+    const email_list = attendees.length > 0
+      ? [...new Set([...attendees, user])]
+      : [user];
+
+    // Try to send event invite email
+    try {
+      const eventDateTime = new Date(`${event_date}T${event_time}`).getTime();
+      CreateEvent(
+        email_list, 
+        event_name,
+        eventDateTime, 
+        parseInt(event_reminder_delay, 10),
+        event_link,
+        event_description
+      );
+    } catch (e) {
+      console.log("could not send email: " + e);
+    }
+
+    res.redirect('/calendar');
   } catch (e) {
-    console.log("error creating event:" + e);
+    console.log("error creating event: " + e);
+    res.status(500).send("Something went wrong.");
   }
-  attendees = (event_attendees || '')
-  .split(',')
-  .map(email => email.trim())
-  .filter(email => email.length > 0);
-
-// … later, when building the full list including yourself:
-let email_list = attendees.length > 0
-  ? [...new Set([...attendees, user])]     // remove duplicates
-  : [ user ];                              // if no attendees entered, just you
-
-
-  try {
-    const eventDateTime = new Date(`${event_date}T${event_time}`).getTime();
-  CreateEvent(
-    email_list, // array of emails
-    event_name,
-    eventDateTime, // timestamp
-    parseInt(event_reminder_delay, 10), // minutes
-    event_link,
-    event_description
-  );
-  } catch(e) {
-    console.log("could not send email:" + e)
-  }
-
-
-  res.redirect('/calendar');
 });
 
 app.get('/rsvp', async (req, res) => 
