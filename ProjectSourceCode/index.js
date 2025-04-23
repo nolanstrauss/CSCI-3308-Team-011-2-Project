@@ -220,6 +220,7 @@ app.post('/calendar', async (req, res) => {
     event_description, event_link,
     user, event_attendees
   ]);
+  
 
   // associate with user
   await db.none(`
