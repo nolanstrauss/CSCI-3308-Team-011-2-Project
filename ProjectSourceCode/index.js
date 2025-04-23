@@ -206,7 +206,12 @@ app.post('/calendar', async (req, res) => {
     event_link, event_attendees
   } = req.body;
   const user = req.session.currentUser[0].username;
-  const sqlTs = `${event_date} ${event_time}`;  // no Date() → toISOString()
+
+  const dt = new Date(`${event_date}T${event_time}`);
+  const sqlTs = dt.toISOString().slice(0,19).replace('T',' ');
+  let attendees = event_attendees.split(',')
+  .map(email => email.trim())
+  .filter(email => email.length > 0);
 
   const { eventid } = await db.one(`
     INSERT INTO events
@@ -218,13 +223,24 @@ app.post('/calendar', async (req, res) => {
     event_name, event_category, sqlTs,
     parseInt(event_reminder_delay,10),
     event_description, event_link,
-    user, event_attendees
+    user, attendees.join(',')
   ]);
 
+
+  //getting emaillist from db which is basically just event_attendees variable from body
+  const attenders = await db.any(
+    `SELECT eventemaillist FROM events WHERE eventid =$1`, [event_result.eventid]
+  );
+
+  const event_id = event_result.eventid;
+
   // associate with user
+
   await db.none(`
     INSERT INTO users_to_events(username,eventid)
     VALUES($1,$2)
+
+
   `, [user, eventid]);
 
   //seperate the event email list by commas and add each value into the attendees db
@@ -234,16 +250,22 @@ app.post('/calendar', async (req, res) => {
   try {
     for (const attendee of attendees) 
       {
-        await db.none(`
-          INSERT INTO events_to_attendees (eventid,attendeeemail,rsvp)
-          VALUES($1,$2,$3)
-        `, [eventid, attendee,"p"]);
-    
-        await db.none(`
-          INSERT INTO attendees (attendeeemail) 
-          VALUES($1)
-        `, [attendee]);
-    
+        const attendee_exists = await db.any('SELECT attendeeemail FROM events_to_attendees WHERE eventid=$1 AND attendeeemail=$2', [event_id, attendee]);
+        if(attendee_exists.length<1){
+          await db.none(`
+            INSERT INTO events_to_attendees (eventid,attendeeemail,rsvp)
+            VALUES($1,$2,$3)
+          `, [eventid, attendee,"p"]);
+        }
+        
+        const user_exists = await db.any(`SELECT attendeeemail FROM attendees WHERE attendeeemail= $1`, [attendee]);
+        if(user_exists.length <1){
+          await db.none(`
+            INSERT INTO attendees (attendeeemail) 
+            VALUES($1)
+          `, [attendee]);
+        }
+        
         console.log(attendee);
       }
   } catch (e) {
@@ -362,32 +384,82 @@ app.post('/rsvp', async (req, res) =>
 
 // === UPDATED EDIT handler ===
 app.post('/calendar/edit', async (req, res) => {
-  const {
-    event_id, event_name, event_category,
-    event_date, event_time,
-    event_reminder_delay, event_description,
-    event_link, event_attendees
-  } = req.body;
-  const sqlTs = `${event_date} ${event_time}`;  // no Date() → toISOString()
+  try{
+    const {
+      event_id, event_name, event_category,
+      event_date, event_time,
+      event_reminder_delay, event_description,
+      event_link, new_event_attendees
+    } = req.body;
+    const dt = new Date(`${event_date}T${event_time}`);
+    const sqlTs = dt.toISOString().slice(0,19).replace('T',' ');
+    
+    let new_attendees = new_event_attendees.split(',')
+    .map(email => email.trim())
+    .filter(email=>email.length>0);
+    
+    
+    await db.none(`
+      UPDATE events SET
+        eventname=$1,
+        eventcategory=$2,
+        eventdate=$3,
+        eventreminderdelay=$4,
+        eventdescription=$5,
+        eventlink=$6,
+        eventemaillist=$7
+      WHERE eventid=$8
+    `, [
+      event_name, event_category, sqlTs,
+      parseInt(event_reminder_delay,10),
+      event_description, event_link,
+      new_attendees.join(','), event_id
+    ]);
 
-  await db.none(`
-    UPDATE events SET
-      eventname=$1,
-      eventcategory=$2,
-      eventdate=$3,
-      eventreminderdelay=$4,
-      eventdescription=$5,
-      eventlink=$6,
-      eventemaillist=$7
-    WHERE eventid=$8
-  `, [
-    event_name, event_category, sqlTs,
-    parseInt(event_reminder_delay,10),
-    event_description, event_link,
-    event_attendees, event_id
-  ]);
+    let current_attendees = await db.any(
+      `SELECT attendeeemail FROM events_to_attendees where eventid = $1`, 
+      [event_id]
+    );
+    let current_emails = current_attendees.map(a=> a.attendeeemail);
 
-  res.redirect('/calendar');
+    // Remove attendees that are no longer in the list
+    const toRemove = current_emails.filter(email => !new_attendees.includes(email));
+    for (const email of toRemove) {
+      await db.none(
+        'DELETE FROM events_to_attendees WHERE eventid = $1 AND attendeeemail = $2',
+        [event_id, email]
+      );
+    }
+
+    // Add new attendees
+    const toAdd = new_attendees.filter(email => !current_emails.includes(email));
+    for (const email of toAdd) {
+      // Check if attendee exists in attendees table
+      const attendeeExists = await db.oneOrNone(
+        'SELECT 1 FROM attendees WHERE attendeeemail = $1', 
+        [email]
+      );
+      
+      if (!attendeeExists) {
+        await db.none(
+          'INSERT INTO attendees (attendeeemail) VALUES ($1)',
+          [email]
+        );
+      }
+
+      await db.none(
+        'INSERT INTO events_to_attendees (eventid, attendeeemail) VALUES ($1, $2)',
+        [event_id, email]
+      );
+    }
+
+    res.redirect('/calendar');
+
+  }catch (err) {
+    console.error('Error in /calendar/edit:', err);
+    res.status(500).send('An error occurred while updating the event.', err);
+  }
+
 });
 
 // DELETE (unchanged)

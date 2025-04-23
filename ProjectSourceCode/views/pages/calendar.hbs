@@ -116,7 +116,7 @@
   {{!-- Create Event Modal --}}
   <div class="modal fade" id="event_modal" tabindex="-1">
     <div class="modal-dialog"><div class="modal-content">
-      <form method="post" action="/calendar">
+      <form id="create_event" method="post" action="/calendar">
         <div class="modal-header">
           <h5 class="modal-title">Create a new Event!</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -129,7 +129,7 @@
           <p>Reminder (mins before)</p><input type="number" name="event_reminder_delay" class="form-control" min="0" required>
           <p>Description</p><textarea name="event_description" class="form-control"></textarea>
           <p>Link to Event</p><input name="event_link" class="form-control">
-          <p>Attendees (emails)</p><input name="event_attendees" class="form-control">
+          <p>Attendees (emails)</p><input name="event_attendees" id="event_attendees" class="form-control">
         </div>
         <div class="modal-footer">
           <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -144,7 +144,7 @@
     <div class="modal-dialog"><div class="modal-content">
 
       <!-- EDIT FORM -->
-      <form method="post" action="/calendar/edit">
+      <form id = "edit_event" method="post" action="/calendar/edit">
         <input type="hidden" name="event_id" id="edit_event_id">
         <div class="modal-header">
           <h5 class="modal-title">Edit Event</h5>
@@ -158,8 +158,8 @@
           <p>Reminder (mins before)</p><input type="number" name="event_reminder_delay" id="edit_reminder" class="form-control">
           <p>Description</p><textarea name="event_description" id="edit_description" class="form-control"></textarea>
           <p>Link to Event</p><input name="event_link" id="edit_link" class="form-control">
-          <p>Attendees (emails)</p><input name="event_attendees" id="edit_attendees" class="form-control">
-        </div>
+          <p>Attendees (emails)</p>
+          <input name="new_event_attendees" id="new_event_attendees" class="form-control">        </div>
         <div class="modal-footer d-flex w-100">
           <button class="btn btn-primary me-auto" type="submit">Save Changes</button>
           <button class="btn btn-secondary mx-2" data-bs-dismiss="modal">Close</button>
@@ -210,30 +210,33 @@
         table.appendChild(row);
         row = document.createElement('tr');
       }
-      const td = document.createElement('td');
+      let td = document.createElement('td');
       td.style.padding = '4px';
       td.style.height = '120px';
-      const num = document.createElement('div');
+      let num = document.createElement('div');
       num.style.fontWeight = 'bold';
       num.textContent = d;
       td.appendChild(num);
 
-      const key = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      let key = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
       (eventsByDate[key] || []).forEach(ev => {
-        const eb = document.createElement('div');
+        let eb = document.createElement('div');
         eb.className = 'eventBlock';
         eb.textContent = `${ev.time} – ${ev.eventname}`;
         eb.onclick = () => {
-          document.getElementById('edit_event_id').value     = ev.eventid;
-          document.getElementById('delete_event_id').value   = ev.eventid;
-          document.getElementById('edit_name').value         = ev.eventname;
-          document.getElementById('edit_category').value     = ev.eventcategory;
-          document.getElementById('edit_date').value         = key;
-          document.getElementById('edit_time').value         = ev.time;
-          document.getElementById('edit_reminder').value     = ev.eventreminderdelay || '';
-          document.getElementById('edit_description').value  = ev.eventdescription;
-          document.getElementById('edit_link').value         = ev.eventlink;
-          document.getElementById('edit_attendees').value    = ev.eventemaillist;  // ← now correct
+          console.log("this is the event:", ev);
+
+          document.getElementById('edit_event_id').value = ev.eventid;
+          document.getElementById('delete_event_id').value = ev.eventid;
+          document.getElementById('edit_name').value = ev.eventname;
+          document.getElementById('edit_category').value = ev.eventcategory;
+          document.getElementById('edit_date').value = key;
+          document.getElementById('edit_time').value = ev.time;
+          document.getElementById('edit_reminder').value = ev.eventreminderdelay || '';
+          document.getElementById('edit_description').value = ev.eventdescription;
+          document.getElementById('edit_link').value = ev.eventlink;
+          document.getElementById('new_event_attendees').value = ev.eventattendees;
+
           new bootstrap.Modal(document.getElementById('edit_modal')).show();
         };
         td.appendChild(eb);
@@ -256,5 +259,80 @@
     if (++month > 11) { month = 0; year++; }
     renderCalendar(year, month);
   };
-  document.addEventListener('DOMContentLoaded', () => renderCalendar(year, month));
+
+document.addEventListener('DOMContentLoaded', () => {
+    renderCalendar(year, month);
+  });
+
+document.addEventListener('submit', async (event) => {
+  let formID = event.target.id;
+  let email_list = '';
+  if (formID === 'create_event') {
+    email_list = document.getElementById('event_attendees').value;
+  } else if (formID === 'edit_event') {
+    email_list = document.getElementById('new_event_attendees').value;
+  } else {
+    return;
+  }
+
+  const emails = email_list
+    .split(',')
+    .map(e => e.trim())
+    .filter(e => e.length > 0);
+
+  const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+
+  for (let email of emails) {
+    if (!regex.test(email)) {
+      alert("One or more of the emails you have entered are invalid!");
+      event.preventDefault();
+      return;
+    }
+  }
+
+  let event_id = document.getElementById('event_id').value;
+
+  let old_emails = await db.any(
+    `SELECT attendeeemail
+     FROM events_to_attendees
+     WHERE eventid = $1`,
+    [event_id]
+  );
+
+  console.log("old emails:", old_emails);
+  console.log("new emails: ", emails);
+
+  for (const old_email of old_emails) {
+    if (!emails.includes(old_email.attendeeemail)) {
+      await db.none(
+        `DELETE FROM events_to_attendees
+         WHERE eventid = $1 AND attendeeemail = $2`,
+        [event_id, old_email.attendeeemail]
+      );
+    }
+  }
+
+  for (const email of emails){
+    if(!old_emails.some(old_email => old_email.attendeeemail == email)){
+      await db.none(
+        `INSERT INTO events_to_attendees (eventid, attendeeemail)
+        VALUES ($1, $2)`,
+        [event_id, email]
+      );
+    }
+  }
+
+  await db.none(
+    `UPDATE events
+     SET eventemaillist = $1
+     WHERE eventid = $2`,
+    [emails.join(','), event_id]
+  );
+
+
+});
+
+
+
 </script>
