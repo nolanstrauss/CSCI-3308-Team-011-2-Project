@@ -229,21 +229,25 @@ app.post('/calendar', async (req, res) => {
   //seperate the event email list by commas and add each value into the attendees db
   const attendees = event_attendees.replace(" ", "").split(',');
 
-  for (const attendee of attendees) 
-  {
-    await db.none(`
-      INSERT INTO events_to_attendees (eventid,attendeeemail,rsvp)
-      VALUES($1,$2,$3)
-    `, [event_id, attendee,"p"]);
 
-    await db.none(`
-      INSERT INTO attendees (attendeeemail) 
-      VALUES($1)
-    `, [attendee]);
-
-    console.log(attendee);
+  try {
+    for (const attendee of attendees) 
+      {
+        await db.none(`
+          INSERT INTO events_to_attendees (eventid,attendeeemail,rsvp)
+          VALUES($1,$2,$3)
+        `, [event_id, attendee,"p"]);
+    
+        await db.none(`
+          INSERT INTO attendees (attendeeemail) 
+          VALUES($1)
+        `, [attendee]);
+    
+        console.log(attendee);
+      }
+  } catch (e) {
+    console.log("error creating event:" + e);
   }
-
   res.redirect('/calendar');
 });
 
