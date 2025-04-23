@@ -192,7 +192,7 @@
   });
 
   let year = new Date().getFullYear(),
-      month = new Date().getMonth();
+      month = new Date().getMonth(),
       day = new Date().getDate(),
       viewType = 'month';
 
@@ -262,7 +262,7 @@ function renderMonthView(y, m) {
         document.getElementById('edit_reminder').value   = ev.eventreminderdelay || '';
         document.getElementById('edit_description').value= ev.eventdescription;
         document.getElementById('edit_link').value       = ev.eventlink;
-        document.getElementById('edit_attendees').value  = ev.eventemaillist;
+        document.getElementById('new_event_attendees').value  = ev.eventemaillist;
         new bootstrap.Modal(document.getElementById('edit_modal')).show();
       };
       td.appendChild(eb);
