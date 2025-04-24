@@ -1,6 +1,3 @@
-require('dotenv').config();
-
-
 // *****************************************************
 // <!-- Section 1 : Import Dependencies -->
 // *****************************************************
@@ -36,11 +33,13 @@ Handlebars.registerHelper('inc', v => parseInt(v) + 1);
 Handlebars.registerHelper('date', v => { return `${v.getMonth()+1}/${v.getDate()}/${v.getFullYear()}`;});
 Handlebars.registerHelper('time', v => { return `${v.toLocaleTimeString()}`;});
 
-const cn = process.env.DATABASE_URL;
 const db = pgp({
-  connectionString: cn,
-  ssl: { rejectUnauthorized: false }
-});
+    host: 'db',
+    port: 5432,
+    database: process.env.POSTGRES_DB,
+    user: process.env.POSTGRES_USER,
+    password: process.env.POSTGRES_PASSWORD
+  });
 
 db.connect()
   .then(c => { console.log('Database connected'); c.done(); })

@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: CSCI-3308-Team-011-2-Project
+    envVars:
+      - key: DATABASE_URL
+        value: postgresql://users_db_bc0s_user:3J12na18h8sda1EAr2lktZPK2ERBlSjh@dpg-cvvve2q4d50c739p5sl0-a.virginia-postgres.render.com/users_db_bc0s
