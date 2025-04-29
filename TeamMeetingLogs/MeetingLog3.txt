@@ -2,9 +2,17 @@ Minutes: 17 Minutes
 
 Decisions made
  - Calendar notification sent designated amount of time before event happens with reminder about when the event starts
+ - Rework User Interface as greater priority
+ - Create attendees input for creating and editing events 
 Alternative actions/options discussed
  - include submit button within card div so does not span the whole page
 Follow-up items, including agreed-on roles and responsibilities
  - Fill out meeting logs
  - Update project board 
  - Fix error with users db to allow tests to pass 
+ - Caroline: setting up db and other backend feature
+ - Nolan: Manage Invitations page and table
+ - Hayden: Deleting users from db and UI, and manage invitations API route
+ - Charbel: Manage and change events forum
+ - Micah: Setting up Brevo emailer based on event information 
+ - Tyler: CSS and configuring UI.
