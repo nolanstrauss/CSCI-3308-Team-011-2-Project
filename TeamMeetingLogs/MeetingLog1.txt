@@ -2,8 +2,11 @@ Minutes: 8 Minutes
 
 Decisions made
  - Begin work on implementing API routes 
+ - Begin implementing basic UI elements in .hbs
+ - Begin work on user authentification through registration and login pages
 Alternative actions/options discussed
  - look at different services for sending emails
+ - discussed posibilities of differing UI elements
 Follow-up items, including agreed-on roles and responsibilities
  - Caroline: setting up db and other backend features
  - Nolan: Login 
