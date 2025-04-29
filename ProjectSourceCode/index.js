@@ -34,7 +34,7 @@ Handlebars.registerHelper('date', v => { return `${v.getMonth()+1}/${v.getDate()
 Handlebars.registerHelper('time', v => { return `${v.toLocaleTimeString()}`;});
 
 const db = pgp({
-    host: 'db',
+    host: process.env.POSTGRES_HOST,
     port: 5432,
     database: process.env.POSTGRES_DB,
     user: process.env.POSTGRES_USER,
