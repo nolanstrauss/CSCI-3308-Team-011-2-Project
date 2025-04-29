@@ -30,5 +30,10 @@ Follow-up items, including agreed-on roles and responsibilities
 - figure out how much developement is left
 - figure out which manage events we want to use
 
-
+ - Caroline: finalizing all API Routes and testing
+ - Nolan: manage events screen
+ - Hayden: Changing database storage based on requirements from nodemailer and Brevo
+ - Charbel: ics download functionality 
+ - Micah: Testing and finalizing email UI
+ - Tyler: Bootstrap styling and dynamic calendar view
 
