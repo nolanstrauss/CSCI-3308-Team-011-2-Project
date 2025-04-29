@@ -2,8 +2,16 @@ Minutes: 10 Minutes
 
 Decisions made
  - commit changes before team meetings NOT just before lab
+ - basic functionality for adding events
+ - functionality to retrieve events
 Alternative actions/options discussed
  - if working on project stories together, make sure commits are different
 Follow-up items, including agreed-on roles and responsibilities
  - make sure committing multiple times throughout week/ before meetings
  - make sure to join meetings on computer to screen share
+ - Caroline: reconfiguring database elements
+ - Nolan: Login and user authentification
+ - Hayden: Calendar event creation popup
+ - Charbel: Logout page
+ - Micah: Calendar email through nodemailer
+ - Tyler: Welcome page UI and API routes
